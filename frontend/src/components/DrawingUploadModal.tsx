@@ -33,6 +33,8 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
     setDeviceId,
     refreshDevices,
     videoConstraints,
+    cameraError,
+    handleUserMediaError,
   } = useWebcam(true);
   const [click, { toggle: toggleClick }] = useDisclosure(false);
   const instance = getAxiosInstance();
@@ -99,11 +101,13 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
               disabled={devices.length === 0}
             />
           )}
-          {!click && (
+          {!click && cameraError && <Text c="red">{cameraError}</Text>}
+          {!click && !cameraError && (
             <Webcam
               ref={webcamRef}
               videoConstraints={videoConstraints}
               onUserMedia={refreshDevices}
+              onUserMediaError={handleUserMediaError}
             />
           )}
           {click && base64Capture && (
@@ -138,7 +142,7 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
             )}
             {!click && (
               <Grid.Col span={12}>
-                <Button onClick={handleCapture} fullWidth>
+                <Button onClick={handleCapture} fullWidth disabled={!!cameraError}>
                   Capture
                 </Button>
               </Grid.Col>

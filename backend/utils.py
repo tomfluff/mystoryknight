@@ -3,7 +3,6 @@ import os
 from PIL import Image
 from io import BytesIO
 import logging
-import cv2
 
 
 def base64_encode_file(image_path):
@@ -49,40 +48,3 @@ def get_mimetype(os):
     if os == "ios":
         mime_type = "audio/mpeg"
     return mime_type
-
-def sample_frames(video_blob, n_frames=10):
-    # Initialize video capture from the video blob
-    video = cv2.VideoCapture(video_blob)
-    
-    # Get the total number of frames in the video
-    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-    
-    # Calculate the interval between frames to sample
-    interval = max(total_frames // n_frames, 1)
-    
-    sampled_frames = []
-    
-    for i in range(0, total_frames, interval):
-        # Set the video position to the i-th frame
-        video.set(cv2.CAP_PROP_POS_FRAMES, i)
-        
-        # Read the frame
-        ret, frame = video.read()
-        
-        if not ret:
-            break
-        
-        # Encode the frame to base64
-        _, buffer = cv2.imencode('.jpg', frame)
-        frame_base64 = base64.b64encode(buffer).decode('utf-8')
-        
-        sampled_frames.append(frame_base64)
-        
-        # Stop if we have sampled enough frames
-        if len(sampled_frames) >= n_frames:
-            break
-    
-    # Release the video capture object
-    video.release()
-    
-    return sampled_frames

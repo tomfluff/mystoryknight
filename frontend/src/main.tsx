@@ -35,7 +35,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <MantineProvider theme={theme} defaultColorScheme="dark">
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
-        <ReactQueryDevtools />
+        {/* Dev only -- this was shipping to production users. */}
+        {import.meta.env.DEV && <ReactQueryDevtools />}
       </QueryClientProvider>
     </MantineProvider>
   </React.StrictMode>

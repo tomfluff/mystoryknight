@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import { useMediaQuery, useScrollIntoView } from "@mantine/hooks";
 import ReadController from "./ReadController";
-import { TAction, TActionKind, TMotion, TStoryPart } from "../types/Story";
+import { TAction, TActionKind, TStoryPart } from "../types/Story";
 import ActionButton from "./ActionButton";
 import getAxiosInstance from "../utils/axiosInstance";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -32,7 +32,7 @@ import useTranslation from "../hooks/useTranslation";
 import { buildStoryContext, createCallContext } from "../utils/llmIntegration";
 import { useSessionStore } from "../stores/sessionStore";
 import { useDisclosure } from "@mantine/hooks";
-import MotionUploadModal from "./MotionUploadModal";
+import ChatUploadModal from "./ChatUploadModal";
 
 type Props = {
   part: TStoryPart;
@@ -159,7 +159,7 @@ const StoryPart = ({ part, isNew }: Props) => {
 
   const handleActionClick = (
     action: TAction,
-    motion: TMotion | null = null
+    chat: { character: string; message: string } | null = null
   ) => {
     if (!action.active) return;
     chooseAction(action);
@@ -172,10 +172,10 @@ const StoryPart = ({ part, isNew }: Props) => {
       // TAction leaked `id`/`active`/`used` into the prompt as noise.
       outcome.mutate({
         ...context,
-        action: motion
-          ? `${motion.action}: ${motion.description}`
+        action: chat
+          ? `Say to ${chat.character}: "${chat.message}"`
           : `${action.title}: ${action.desc}`,
-        action_source: motion ? "motion" : "choice",
+        action_source: chat ? "chat" : "choice",
       });
     }
   };
@@ -274,18 +274,21 @@ const StoryPart = ({ part, isNew }: Props) => {
           )}
           {part.actions &&
             part.actions.map((action: TAction, i: number) => {
-              if (actionKind(action) === "motion_capture") {
+              // Legacy sessions may still hold a Motion Capture action; the
+              // feature is gone, so hide it.
+              if (actionKind(action) === "motion_capture") return null;
+              if (actionKind(action) === "chat") {
                 return (
                   <Box key={i}>
                     <ActionButton
                       action={action}
                       handleClick={() => openCapture()}
                     />
-                    <MotionUploadModal
+                    <ChatUploadModal
                       display={captureModal}
                       finalAction={closeCapture}
-                      handleMotion={(motion) => {
-                        handleActionClick(action, motion);
+                      handleChat={(character, message) => {
+                        handleActionClick(action, { character, message });
                       }}
                     />
                   </Box>

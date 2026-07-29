@@ -19,12 +19,56 @@ MAX_ENTITIES = 12
 MAX_THREADS = 5
 
 
+# Hero's-journey beats, simplified for a children's story. Fractions are of the
+# planned story length; the stage steers the NEXT part (same convention as
+# compute_phase). These are GUIDELINES woven into the prompt with an explicit
+# "connect only if it fits" framing -- the child's choices stay in charge.
+JOURNEY_STAGES = [
+    "call_to_adventure",
+    "crossing_the_threshold",
+    "trials_and_friends",
+    "the_ordeal",
+    "the_reward",
+    "the_road_back",
+    "return_transformed",
+]
+
+STAGE_GUIDELINES = {
+    "call_to_adventure": "The hero senses something is changing; make the pull of the adventure clear.",
+    "crossing_the_threshold": "The hero leaves the familiar behind and steps into the unknown.",
+    "trials_and_friends": "Tests, allies and small setbacks: let the hero struggle a little, learn something, or gain a friend.",
+    "the_ordeal": "The hardest challenge yet: bring the central conflict of the premise to a head.",
+    "the_reward": "The hero gains what they sought -- or something better than they expected.",
+    "the_road_back": "Start the journey home: begin resolving the remaining open threads.",
+    "return_transformed": "The hero returns changed: show what is different now, and close every remaining thread.",
+}
+
+# Stages early enough that a random story "spice" beat still helps variety;
+# from the ordeal on, extra complications fight the arc.
+EARLY_STAGES = {"call_to_adventure", "crossing_the_threshold", "trials_and_friends"}
+
+
+def compute_stage(index, target):
+    """Journey stage guiding the part AFTER `index` parts have been written.
+
+    Walks the stages in order and always starts at call_to_adventure, whatever
+    the target length. (The old fraction thresholds made call_to_adventure
+    unreachable at every target, and target=6 stories opened at
+    trials_and_friends -- the arc started two stages in.)
+    """
+    target = max(int(target or 1), 1)
+    slot = int((max(int(index), 1) - 1) / target * len(JOURNEY_STAGES))
+    return JOURNEY_STAGES[min(slot, len(JOURNEY_STAGES) - 1)]
+
+
 def compute_phase(index, target):
-    # Steers the NEXT part, hence index + 1.
-    r = (index + 1) / target
-    if r < 0.7:
+    # Derived from the journey stage so the two can never contradict each other
+    # (they used to be computed separately and disagreed -- e.g. phase "rising"
+    # while the stage was already "the_ordeal").
+    stage = compute_stage(index, target)
+    if stage in EARLY_STAGES:
         return "rising"
-    if r < 1.0:
+    if stage in ("the_ordeal", "the_reward"):
         return "climax"
     return "resolution"
 
@@ -39,7 +83,7 @@ def initial_state(state_update, part_text):
         ],
         "entities": (state_update.get("entities") or [])[:MAX_ENTITIES],
         "openThreads": (state_update.get("open_threads") or [])[:MAX_THREADS],
-        "beat": {"index": 1, "target": target, "phase": compute_phase(1, target)},
+        "beat": {"index": 1, "target": target, "phase": compute_phase(1, target), "stage": compute_stage(1, target)},
     }
 
 
@@ -54,7 +98,7 @@ def degenerate_from_blob(story_text):
         "recentParts": [],
         "entities": [],
         "openThreads": [],
-        "beat": {"index": 1, "target": STORY_TARGET_MAX, "phase": "rising"},
+        "beat": {"index": 1, "target": STORY_TARGET_MAX, "phase": "rising", "stage": compute_stage(1, STORY_TARGET_MAX)},
     }
 
 
@@ -78,7 +122,7 @@ def advance_state(state, part_text, state_update):
         "recentParts": recent,
         "entities": (state_update.get("entities") or [])[:MAX_ENTITIES],
         "openThreads": (state_update.get("open_threads") or [])[:MAX_THREADS],
-        "beat": {"index": index, "target": target, "phase": compute_phase(index, target)},
+        "beat": {"index": index, "target": target, "phase": compute_phase(index, target), "stage": compute_stage(index, target)},
     }
 
 
@@ -94,6 +138,7 @@ def prompt_fields(state):
         "entities": state.get("entities") or [],
         "open_threads": state.get("openThreads") or [],
         "phase": (state.get("beat") or {}).get("phase", "rising"),
+        "journey_stage": (state.get("beat") or {}).get("stage", ""),
     }
 
 

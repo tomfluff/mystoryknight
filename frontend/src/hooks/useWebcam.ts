@@ -18,6 +18,20 @@ const useWebcam = (preferBack = false) => {
   const [base64Capture, setBase64Capture] = useState<string | null>(null);
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [deviceId, setDeviceId] = useState<string | null>(null);
+  // Without this a blocked or missing camera leaves the modal showing
+  // "Detecting cameras..." over a black void forever, with no explanation.
+  const [cameraError, setCameraError] = useState<string | null>(null);
+
+  const handleUserMediaError = useCallback((err: string | DOMException) => {
+    const name = typeof err === "string" ? err : err.name;
+    setCameraError(
+      name === "NotAllowedError"
+        ? "Camera access was blocked. Allow the camera in your browser, then reopen this window."
+        : name === "NotFoundError" || name === "OverconstrainedError"
+        ? "No camera found. Connect a camera and reopen this window."
+        : "The camera could not be started. Check that no other app is using it."
+    );
+  }, []);
 
   // Device labels are empty until the user grants camera permission, so call
   // this from <Webcam onUserMedia>, not on mount.
@@ -62,6 +76,8 @@ const useWebcam = (preferBack = false) => {
     setDeviceId,
     refreshDevices,
     videoConstraints,
+    cameraError,
+    handleUserMediaError,
   };
 };
 

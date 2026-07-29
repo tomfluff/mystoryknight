@@ -13,6 +13,7 @@ from openai import OpenAI
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import logger_setup
 from config import *
+from story_state import STAGE_GUIDELINES, EARLY_STAGES
 
 DEBUG = LLM_DEBUG
 
@@ -343,7 +344,8 @@ class Storyteller:
     # -- Storyteller Functions --
 
     def initialize_story(self, context, complexity):
-        length = random.choice([1, 1, 1, 2, 2, 3, 4])
+        # Min 2: a 1-sentence cap produced 40-word run-ons at kindergarten level.
+        length = random.choice([2, 2, 3, 3, 4])
         messages = [
             {
                 "role": "system",
@@ -356,13 +358,15 @@ You are a great storyteller for children.
 2. Write the opening part of the story.
     - No more than %d sentences.
     - The protagonist from the context is the main character.
-    - Stay true to the protagonist's personality, likes, dislikes and fears.
+    - Call the protagonist by their shortname after the first mention, or use a pronoun.
+    - Stay true to the protagonist's personality, likes, dislikes and fears. Show these through what they do, never by listing them.
     - Establish the setting and hint at what is at stake.
 3. Language level: %s
 4. Write "keymoment": one sentence describing a single scene from this part as a picture.
     - Show the main event of the part, in the place where it happens.
-    - Mention every character present in the scene.
-    - Do not use any character's name; describe each by appearance instead.
+    - Mention every character present in the scene, and no one else.
+    - Do not use any character's name; describe each by what they look like instead.
+    - Never call anyone a child, kid, boy or girl. Describe what they actually are.
 5. Set "sentiment" to the mood of this part.
 6. Keep the content safe and age-appropriate. No violence, gore, or frightening imagery.
 7. Write "state_update":
@@ -499,8 +503,9 @@ You are a great storyteller for children.
 3. Language level: %s
 4. Write "keymoment": one sentence describing a single scene from this final part as a picture.
     - Show the main event of the part, in the place where it happens.
-    - Mention every character present in the scene.
-    - Do not use any character's name; describe each by appearance instead.
+    - Mention every character present in the scene, and no one else.
+    - Do not use any character's name; describe each by what they look like instead.
+    - Never call anyone a child, kid, boy or girl. Describe what they actually are.
 5. Set "sentiment" to the mood of this part.
 6. Keep the content safe and age-appropriate. No violence, gore, or frightening imagery.
 
@@ -528,6 +533,19 @@ Example JSON object:
             },
         ]
         return self.send_gpt3_request(messages, SCHEMA_TERMINATE_STORY)
+
+    # Rotated per part so the prose does not settle into one skeleton. Left to
+    # the model, every part opened "<name> decided to ..."; given a list to pick
+    # from, it opened three parts in a row with onomatopoeia. Pick for it.
+    OPENING_STYLES = [
+        "with someone speaking -- a line of dialogue.",
+        "with a sound effect.",
+        "by describing the place the part happens in.",
+        "with what another character does or says.",
+        "with something the hero notices or feels.",
+        "in the middle of the action, already underway.",
+        "with a short question the hero asks themselves.",
+    ]
 
     ACTION_FLAVORS = [
         "BOLD: a brave, daring move with a real risk that could go wrong.",
@@ -603,7 +621,8 @@ Example JSON object (flavors BOLD and SILLY):
 
     def generate_story_part(self, context, complexity):
         # Generate a story part based on the given context
-        length = random.choice([1, 1, 1, 2, 2, 3, 4])
+        # Min 2: a 1-sentence cap produced 40-word run-ons at kindergarten level.
+        length = random.choice([2, 2, 3, 3, 4])
         settings = [
             "Something bad happens to the main character.",
             "Introduce a new villain.",
@@ -611,26 +630,32 @@ Example JSON object (flavors BOLD and SILLY):
             "Move the story to a new location.",
             "End in a cliffhanger.",
         ]
-        # Arc control: the beat phase (computed in story_state.py) decides how
-        # hard this part converges on the premise. Random "spice" only while
-        # rising -- introducing a new villain mid-climax is exactly the drift
-        # this exists to stop.
+        # Arc control: the hero's-journey stage (computed in story_state.py)
+        # provides a GUIDELINE for this part -- explicitly framed as optional so
+        # the child's choices keep directing the story. Random "spice" only in
+        # the early stages; past the ordeal, extra complications fight the arc.
+        # The resolution phase keeps a hard wrap-up directive on top.
         phase = context.get("phase", "rising")
-        if phase == "climax":
-            directive = (
-                "This is the climax: bring the main conflict of the premise to a head. "
-                "Do not introduce new characters or places."
+        stage = context.get("journey_stage", "")
+        guideline = STAGE_GUIDELINES.get(stage, "")
+        directive = ""
+        if stage in EARLY_STAGES:
+            directive = random.choice(settings) + " "
+        if guideline:
+            stage_name = stage.replace("_", " ")
+            directive += (
+                f"Story guideline (hero's journey -- {stage_name}): {guideline} "
+                "Connect to this beat only if it fits the way the story is "
+                "evolving; never force it."
             )
-        elif phase == "resolution":
-            directive = (
-                "Begin wrapping up. Move the story toward resolving the premise and "
-                "the open_threads. Do not introduce new characters, places, or problems."
+        if phase == "resolution":
+            directive += (
+                " Begin wrapping up: move the story toward resolving the premise "
+                "and the open_threads. Do not introduce new characters, places, "
+                "or problems."
             )
-        else:
-            directive = (
-                random.choice(settings)
-                + " Nudge the story gently toward the premise and raise the stakes."
-            )
+        directive = directive.strip() or "Nudge the story gently toward the premise."
+        opening = random.choice(self.OPENING_STYLES)
 
         messages = [
             {
@@ -647,10 +672,11 @@ You are a great storyteller for children.
     - "open_threads": unresolved plot threads.
     - "action": what the main character does now.
 2. Continue the story from the end of the last item in recent_parts, with the main character performing the given action.
-    - If "action_source" is "motion", the child physically acted this out. Have the protagonist perform that movement.
+    - If "action_source" is "chat", the action is words the hero says out loud to another character. Write the hero speaking them, and that character's reply, as dialogue. Do not add anyone new to the scene.
 3. The new part must be:
     - A direct continuation. Never restate or summarize what already happened.
-    - Opened with a brief sentence describing the action, for example: "Johnny decided to investigate the noise."
+    - Showing the character carrying out the action, but NOT by announcing it. Never open with "<name> decided to ..." or "<name> did ...".
+    - Opened this way: %s
     - True to the protagonist's personality, likes, dislikes and fears.
     - Referring to other characters, places and things by their exact entity names. Never rename or reinvent them.
     - Calling the protagonist by their shortname, or a pronoun -- vary it naturally. Never repeat the full name.
@@ -659,8 +685,9 @@ You are a great storyteller for children.
 4. Language level: %s
 5. Write "keymoment": one sentence describing a single scene from this part as a picture.
     - Show the main event of the part, in the place where it happens.
-    - Mention every character present in the scene.
-    - Do not use any character's name; describe each by appearance instead.
+    - Mention every character present in the scene, and no one else.
+    - Do not use any character's name; describe each by what they look like instead.
+    - Never call anyone a child, kid, boy or girl. Describe what they actually are.
 6. Set "sentiment" to the mood of this part.
 7. Keep the content safe and age-appropriate. No violence, gore, or frightening imagery.
 8. Write "state_update":
@@ -685,7 +712,9 @@ Example JSON object:
     }
 }
 """
-                        % (directive, length + 1, complexity),
+                        # Order matters: the text has the opening-style slot
+                        # BEFORE the stage directive slot.
+                        % (opening, directive, length + 1, complexity),
                     }
                 ],
             },
@@ -843,10 +872,14 @@ Example JSON object:
             # Image 2, when present, is the latest illustration -- it carries
             # the rendering style and the character's current look, so the
             # character can evolve with the story without compounding drift.
+            # NB: do not describe Image 1 as "the child's drawing" -- the image
+            # model read "child" as a subject and drew a human child into the
+            # scene.
             lines.append(
-                "Subject: the main character from Image 1 (the child's drawing), "
-                "mid-action in the scene, interacting with the things the scene "
-                "mentions. Include every character the scene mentions."
+                "Subject: the main character from Image 1 (the reference "
+                "drawing), mid-action in the scene, interacting with the things "
+                "the scene mentions. Include every character the scene "
+                "mentions, and no one else."
             )
             if story_part.get("previous_image"):
                 lines.append(
@@ -887,7 +920,8 @@ Example JSON object:
         lines.append(f"Style: {style}. Vivid colors, friendly, for young children.")
         lines.append(
             "Constraints: no text, no lettering, no watermark, no logos, "
-            "nothing frightening."
+            "nothing frightening. Do not add any people or characters that the "
+            "scene does not mention."
         )
         lines.append("Intended use: a children's storybook illustration page.")
         prompt = "\n".join(lines)
@@ -977,61 +1011,6 @@ Example JSON object:
         if logger:
             logger.debug(f"Translated text: {data}")
         return data
-
-    def process_motion(self, frames):
-        if logger:
-            logger.debug(f"Processing motion...")
-
-        messages = [
-            {
-                "role": "system",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": """
-You are a stunt coreographer. Help describe the most important motion presented in the video. What is the person doing?
-                        """,
-                    }
-                ],
-            },
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": """
-Using JSON format, output: title, desctiption, emotion, action, keywords.
-Do not pay attention to the perform performing the actio nand focus on the action itself.
-Example:
-{
-    "title": "Punching",
-    "description": "Movement from neutral standing position to a ready fighting stance, punch several timesm, and returns back to a neutral standing position.",
-    "emotion": "Focused",
-    "action": "Punching",
-    "keywords": ["punch", "fighting"]
-}
-""",
-                    },
-                ],
-            },
-            {
-                "role": "user",
-                "content": [
-                    "These are video frames in order.",
-                    *map(
-                        lambda frame: {
-                            "type": "image_url",
-                            "image_url": {"url": f"{frame}", "detail": "low"},
-                        },
-                        frames,
-                    ),
-                ],
-            },
-        ]
-
-        return self.send_gpt4_request(messages)
-
-    # -- LLM Request Functions --
 
     def send_vision_request(self, request, schema=None):
         response = None

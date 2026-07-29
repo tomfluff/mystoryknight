@@ -8,14 +8,6 @@ export type TAnalytics = {
   complexity: string;
 };
 
-export type TMotion = {
-  title: string;
-  description: string;
-  emotion: string;
-  action: string;
-  keywords: string[];
-};
-
 export type TEntityKind = "character" | "place" | "object";
 
 export type TStoryEntity = {
@@ -30,6 +22,7 @@ export type TStoryBeat = {
   index: number; // parts generated so far (opening part = 1)
   target: number; // planned total parts, fixed at /story/init
   phase: TBeatPhase; // server-computed from index/target
+  stage?: string; // hero's-journey stage guiding the next part
 };
 
 export type TRecentPart = {
@@ -49,7 +42,7 @@ export type TStoryState = {
   beat: TStoryBeat;
 };
 
-export type TActionKind = "choice" | "motion_capture" | "ending";
+export type TActionKind = "choice" | "chat" | "motion_capture" | "ending"; // motion_capture: legacy only, no longer produced
 
 export type TAction = {
   id: string;

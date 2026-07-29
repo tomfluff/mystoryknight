@@ -9,7 +9,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils import save_base64_image, logger_setup, get_mimetype, sample_frames
+from utils import save_base64_image, logger_setup, get_mimetype
 from config import *
 from llm import Storyteller
 import story_state
@@ -417,13 +417,22 @@ def actions_gen():
         # Stamp the kind in its own pass. Folding it into the comprehension below
         # would let a model-emitted "kind" key override the server's classification.
         actions = [{**a, "kind": "choice"} for a in actions]
-        actions.append(
-            {
-                "kind": "motion_capture",
-                "title": "Motion Capture",
-                "desc": "Use your body to progress the story!",
-            }
-        )
+        # Only offer chat when there is actually someone to talk to: a character
+        # entity other than the protagonist.
+        protagonist_name = (context.get("protagonist") or {}).get("name")
+        chat_partners = [
+            e
+            for e in (state.get("entities") if isinstance(state, dict) else None) or []
+            if e.get("kind") == "character" and e.get("name") != protagonist_name
+        ]
+        if chat_partners:
+            actions.append(
+                {
+                    "kind": "chat",
+                    "title": "Chat with...",
+                    "desc": "Say something to one of the characters!",
+                }
+            )
         actions.append(
             {
                 "kind": "ending",
@@ -439,36 +448,6 @@ def actions_gen():
             message="Story actions generated!",
             status=200,
             data={"list": actions},
-        )
-    except Exception as e:
-        if logger:
-            logger.error(str(e))
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/api/story/motion", methods=["POST"])
-def process_motion():
-    try:
-        data = request.get_json()
-        if not data:
-            if logger:
-                logger.error("No data found in the request!")
-            return jsonify(type="error", message="No data found!", status=400)
-
-        frames = data.get("frames", None)
-        if not frames:
-            if logger:
-                logger.error("No frames found in the request!")
-            return jsonify(type="error", message="No frames found!", status=400)
-
-        result = llm.process_motion(frames)
-        if logger:
-            logger.debug(f"Motion processed: {result}")
-        return jsonify(
-            type="success",
-            message="Motion processed!",
-            status=200,
-            data={**result},
         )
     except Exception as e:
         if logger:
