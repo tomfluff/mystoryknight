@@ -1,0 +1,83 @@
+/*
+ * Sparkles marking the Ending action once the story reaches a natural stopping
+ * point. Deliberately NOT a colour change: the button stays violet, because
+ * yellow/orange reads as a warning and colour alone is invisible to colourblind
+ * users. The sparkle is a suggestion, not a call to action -- it brightens for a
+ * few seconds when it appears, then settles to a quiet twinkle so it does not
+ * compete with the story text a child is reading.
+ */
+
+.wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.stars {
+  position: absolute;
+  inset: -7px;
+  pointer-events: none;
+  /* Attention on arrival, then calm down and stay calm. */
+  animation: settle 6s ease-out forwards;
+}
+
+.star {
+  position: absolute;
+  font-size: 14px;
+  line-height: 1;
+  /* Near-white gold, not Mantine's yellow-4 -- that reads as dull olive on the
+     dark theme. The glow does most of the "sparkle" work. */
+  color: #fff6c2;
+  text-shadow: 0 0 4px #ffe066, 0 0 10px rgba(255, 224, 102, 0.7);
+  animation: twinkle 2.2s ease-in-out infinite;
+}
+
+.star:nth-child(1) {
+  top: 0;
+  left: 6%;
+  animation-delay: 0s;
+}
+.star:nth-child(2) {
+  top: 12%;
+  right: 0;
+  animation-delay: 0.55s;
+}
+.star:nth-child(3) {
+  bottom: 0;
+  left: 22%;
+  animation-delay: 1.1s;
+}
+.star:nth-child(4) {
+  bottom: 8%;
+  right: 14%;
+  animation-delay: 1.65s;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes settle {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}
+
+/* Motion is the whole mechanism here, so there is no meaningful still version:
+   hide the sparkles rather than leave four static glyphs floating. */
+@media (prefers-reduced-motion: reduce) {
+  .stars {
+    display: none;
+  }
+}
