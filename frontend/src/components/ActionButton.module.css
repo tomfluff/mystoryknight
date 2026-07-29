@@ -74,10 +74,17 @@
   }
 }
 
-/* Motion is the whole mechanism here, so there is no meaningful still version:
-   hide the sparkles rather than leave four static glyphs floating. */
+/* Reduce the motion, not the information: the stars still mark the Ending as
+   ready, they just hold still. (They were previously hidden outright, which
+   left reduced-motion users with no signal at all.) */
 @media (prefers-reduced-motion: reduce) {
   .stars {
-    display: none;
+    animation: none;
+    opacity: 0.9;
+  }
+  .star {
+    animation: none;
+    opacity: 1;
+    transform: scale(1);
   }
 }
