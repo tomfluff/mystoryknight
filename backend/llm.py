@@ -192,7 +192,7 @@ SCHEMA_TERMINATE_STORY = {
 
 SCHEMA_GENERATE_ACTIONS = _titled_list_schema(
     "generate_actions",
-    "At most three words.",
+    "A plain instruction starting with a verb, at most four words. Never a name or a label.",
     "One sentence naming the character and what they do.",
 )
 
@@ -581,7 +581,8 @@ You are a great storyteller for children.
     - Fit what this character would plausibly do, given their personality and fears.
     - Move the story towards the premise.
     - Refer to other characters, places and things by their exact entity names.
-    - Have a "title" of at most three words, punchy and fun to say out loud.
+    - Have a "title" that is a plain instruction to the hero: start with a verb, at most four words, using everyday words a young child knows. For example: "Go to the tunnel", "Ask the frog", "Hide in the log", "Run away", "Open the door".
+    - Never make the "title" a name, a label or a clever phrase. It must say what the hero does.
     - Have a "desc" of one sentence, using the protagonist's shortname, saying what they do.
 4. Do not repeat any action listed in "past_actions".
 5. If "phase" is "resolution", the story is nearly over: every action must move toward resolving the premise or an open thread, but keep its flavor.
@@ -593,11 +594,11 @@ Example JSON object (flavors BOLD and SILLY):
 {
     "list": [
         {
-            "title": "Pounce the Shadow",
+            "title": "Jump at the shadow",
             "desc": "Johnny leaps at the moving shadow behind the curtain, even though it might be bigger than him."
         },
         {
-            "title": "Tuna Trap",
+            "title": "Set a tuna trap",
             "desc": "Johnny balances his last tuna can on the door so whoever sneaks in gets a fishy surprise."
         }
     ]
