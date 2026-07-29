@@ -29,6 +29,8 @@ const ActionButton = ({ action, handleClick, emphasis }: Props) => {
           <span className={classes.star}>✧</span>
           <span className={classes.star}>✦</span>
           <span className={classes.star}>✧</span>
+          <span className={classes.star}>✦</span>
+          <span className={classes.star}>✧</span>
         </span>
       )}
       <Button

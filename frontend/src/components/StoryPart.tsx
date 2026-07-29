@@ -301,7 +301,10 @@ const StoryPart = ({ part, isNew }: Props) => {
                     handleClick={() => handleActionClick(action)}
                     emphasis={
                       actionKind(action) === "ending" &&
-                      storyPhase === "resolution"
+                      storyPhase === "resolution" &&
+                      // Stop sparkling the moment any choice is taken:
+                      // chooseAction clears `active` on every action.
+                      action.active
                     }
                   />
                 );

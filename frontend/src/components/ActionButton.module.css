@@ -14,7 +14,12 @@
 
 .stars {
   position: absolute;
-  inset: -7px;
+  /* Well outside the button vertically (at -7px the stars overlapped the edges
+     and the button painted over them), but tight horizontally -- a wider spread
+     puts stars on the neighbouring action button. */
+  inset: -12px -5px;
+  /* Above the button, not behind it. */
+  z-index: 10;
   pointer-events: none;
   /* Attention on arrival, then calm down and stay calm. */
   animation: settle 6s ease-out forwards;
@@ -24,32 +29,57 @@
   position: absolute;
   font-size: 14px;
   line-height: 1;
-  /* Near-white gold, not Mantine's yellow-4 -- that reads as dull olive on the
-     dark theme. The glow does most of the "sparkle" work. */
-  color: #fff6c2;
-  text-shadow: 0 0 4px #ffe066, 0 0 10px rgba(255, 224, 102, 0.7);
+  /* The glyph itself carries the hue. A near-white core with only a coloured
+     halo looked uniformly white -- the colour has to be in the star, not just
+     around it. */
+  color: #ffd23d;
+  text-shadow: 0 0 6px rgba(255, 210, 61, 0.9);
   animation: twinkle 2.2s ease-in-out infinite;
 }
 
+/* Gold, warm pink and violet -- picks up the app's violet without becoming a
+   rainbow. Two stars per hue, spread around the ring. */
+.star:nth-child(3n + 2) {
+  color: #ff7ac0;
+  text-shadow: 0 0 6px rgba(255, 122, 192, 0.9);
+}
+.star:nth-child(3n + 3) {
+  color: #a97bff;
+  text-shadow: 0 0 7px rgba(169, 123, 255, 0.95);
+}
+
+/* Ring around the button, all clear of its edges. */
 .star:nth-child(1) {
   top: 0;
-  left: 6%;
+  left: 4px;
   animation-delay: 0s;
 }
 .star:nth-child(2) {
-  top: 12%;
-  right: 0;
-  animation-delay: 0.55s;
+  top: 2px;
+  right: 30%;
+  font-size: 11px;
+  animation-delay: 0.4s;
 }
 .star:nth-child(3) {
   bottom: 0;
-  left: 22%;
-  animation-delay: 1.1s;
+  left: 26%;
+  animation-delay: 0.8s;
 }
 .star:nth-child(4) {
-  bottom: 8%;
-  right: 14%;
-  animation-delay: 1.65s;
+  bottom: 3px;
+  right: 12%;
+  animation-delay: 1.2s;
+}
+.star:nth-child(5) {
+  top: 45%;
+  left: 0;
+  font-size: 11px;
+  animation-delay: 1.6s;
+}
+.star:nth-child(6) {
+  top: 0;
+  right: 6px;
+  animation-delay: 2s;
 }
 
 @keyframes twinkle {
