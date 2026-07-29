@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import {
   Image,
+  Badge,
   Box,
   Flex,
   Paper,
@@ -13,22 +14,22 @@ import {
 } from "@mantine/core";
 import { useMediaQuery, useScrollIntoView } from "@mantine/hooks";
 import ReadController from "./ReadController";
-import { TAction, TMotion, TStoryPart } from "../types/Story";
+import { TAction, TActionKind, TMotion, TStoryPart } from "../types/Story";
 import ActionButton from "./ActionButton";
 import getAxiosInstance from "../utils/axiosInstance";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   appendStory,
   chooseAction,
-  getStoryText,
   setFinished,
+  setStoryState,
   updateActions,
   updateStoryImage,
   useAdventureStore,
 } from "../stores/adventureStore";
 import { usePreferencesStore } from "../stores/preferencesStore";
 import useTranslation from "../hooks/useTranslation";
-import { createCallContext } from "../utils/llmIntegration";
+import { buildStoryContext, createCallContext } from "../utils/llmIntegration";
 import { useSessionStore } from "../stores/sessionStore";
 import { useDisclosure } from "@mantine/hooks";
 import MotionUploadModal from "./MotionUploadModal";
@@ -36,6 +37,19 @@ import MotionUploadModal from "./MotionUploadModal";
 type Props = {
   part: TStoryPart;
   isNew: boolean;
+};
+
+/*
+ * Actions carry an explicit `kind` from the backend. Stories already in
+ * sessionStorage when that field shipped rehydrate without it, so fall back to
+ * the old title match for those. Deletable once no legacy sessions can exist.
+ */
+const actionKind = (action: TAction): TActionKind => {
+  if (action.kind) return action.kind;
+  const title = action.title.toLowerCase();
+  if (title === "ending") return "ending";
+  if (title === "motion capture") return "motion_capture";
+  return "choice";
 };
 
 const StoryPart = ({ part, isNew }: Props) => {
@@ -54,13 +68,13 @@ const StoryPart = ({ part, isNew }: Props) => {
   const includeStoryImages = usePreferencesStore.use.includeStoryImages();
 
   const finished = useAdventureStore.use.finished();
+  const storyPhase = useAdventureStore.use.storyState()?.beat.phase;
 
   const { isLoading: actionLoading } = useQuery({
     queryKey: ["actions", part.id],
     queryFn: ({ signal }) => {
-      const character = useAdventureStore.getState().character;
       return instance
-        .post("/story/actions", createCallContext({ part, character }), {
+        .post("/story/actions", createCallContext(buildStoryContext()), {
           signal,
         })
         .then((res) => {
@@ -79,17 +93,34 @@ const StoryPart = ({ part, isNew }: Props) => {
   const { isLoading: imageLoading } = useQuery({
     queryKey: ["story-image", part.id],
     queryFn: ({ signal }) => {
+      const image = useAdventureStore.getState().image;
+      // Latest illustrated part: its image carries the rendering style and the
+      // character's current look forward (Image 2 in the backend prompt).
+      const previousImage = [...(useAdventureStore.getState().story?.parts ?? [])]
+        .reverse()
+        .find((p) => p.image && p.id !== part.id)?.image;
       return instance
         .post(
           "/story/image",
           {
             content: part.keymoment,
-            style: useAdventureStore.getState().image?.style,
+            // Filename only -- the backend already has the file on disk.
+            previous_image: previousImage?.split("/").pop(),
+            // The passage the child just read: grounds the scene so the image
+            // depicts this part, not a loose interpretation of one sentence.
+            story_text: part.text,
+            // Maps to the illustration's lighting/mood.
+            sentiment: part.sentiment,
+            style: image?.style,
+            // The child's original drawing: used as the reference image so the
+            // protagonist looks the same in every illustration.
+            reference_image: image?.src,
+            character: { content: image?.content, colors: image?.colors },
           },
           { signal }
         )
         .then((res) => {
-          updateStoryImage(res.data.data.image_url);
+          updateStoryImage(res.data.data.image_url, res.data.data.seconds);
           return res.data.data;
         });
     },
@@ -107,7 +138,9 @@ const StoryPart = ({ part, isNew }: Props) => {
         .then((res) => res.data.data);
     },
     onSuccess: (data) => {
-      appendStory(data);
+      const { state, ...part } = data;
+      appendStory(part);
+      if (state) setStoryState(state);
     },
   });
 
@@ -130,17 +163,19 @@ const StoryPart = ({ part, isNew }: Props) => {
   ) => {
     if (!action.active) return;
     chooseAction(action);
-    const story = getStoryText()?.join(" ");
-    if (!story) return;
-    if (action.title.toLowerCase() === "ending") {
-      ending.mutate({
-        story: story,
-      });
+    const context = buildStoryContext();
+    if (!context.state) return;
+    if (actionKind(action) === "ending") {
+      ending.mutate(context);
     } else {
+      // The prompt expects `action` as a sentence, not an object -- sending the
+      // TAction leaked `id`/`active`/`used` into the prompt as noise.
       outcome.mutate({
-        premise: useAdventureStore.getState().premise?.desc,
-        action: motion ?? action,
-        story: story,
+        ...context,
+        action: motion
+          ? `${motion.action}: ${motion.description}`
+          : `${action.title}: ${action.desc}`,
+        action_source: motion ? "motion" : "choice",
       });
     }
   };
@@ -171,13 +206,28 @@ const StoryPart = ({ part, isNew }: Props) => {
           {includeStoryImages && (
             <Group gap="sm" align="start" justify="center">
               {part.image ? (
-                <Image
-                  src={part.image}
-                  alt={part.keymoment}
-                  radius="md"
-                  w={240}
-                  h={240}
-                />
+                <Box pos="relative" w={240} h={240}>
+                  <Image
+                    src={part.image}
+                    alt={part.keymoment}
+                    radius="md"
+                    w={240}
+                    h={240}
+                  />
+                  {part.imageSeconds != null && (
+                    <Badge
+                      pos="absolute"
+                      bottom={6}
+                      left={6}
+                      size="sm"
+                      variant="filled"
+                      color="dark"
+                      style={{ opacity: 0.75 }}
+                    >
+                      {part.imageSeconds}s
+                    </Badge>
+                  )}
+                </Box>
               ) : (
                 imageLoading && <Skeleton radius="md" w={240} h={240} />
               )}
@@ -224,7 +274,7 @@ const StoryPart = ({ part, isNew }: Props) => {
           )}
           {part.actions &&
             part.actions.map((action: TAction, i: number) => {
-              if (action.title.toLowerCase() === "motion capture") {
+              if (actionKind(action) === "motion_capture") {
                 return (
                   <Box key={i}>
                     <ActionButton
@@ -246,6 +296,10 @@ const StoryPart = ({ part, isNew }: Props) => {
                     key={i}
                     action={action}
                     handleClick={() => handleActionClick(action)}
+                    emphasis={
+                      actionKind(action) === "ending" &&
+                      storyPhase === "resolution"
+                    }
                   />
                 );
               }

@@ -7,9 +7,12 @@ import useTranslation from "../hooks/useTranslation";
 type Props = {
   action: TAction;
   handleClick: () => void;
+  // Highlight this action (used for Ending once the story reaches resolution).
+  // Suggestion only -- the child always decides.
+  emphasis?: boolean;
 };
 
-const ActionButton = ({ action, handleClick }: Props) => {
+const ActionButton = ({ action, handleClick, emphasis }: Props) => {
   const { data: shorttext, isLoading: shorttextLoading } = useTranslation(
     action.title
   );
@@ -25,7 +28,15 @@ const ActionButton = ({ action, handleClick }: Props) => {
           borderTopRightRadius: 0,
           borderBottomRightRadius: 0,
         }}
-        color={!action.active ? (action.used ? "violet" : "gray") : "violet"}
+        color={
+          !action.active
+            ? action.used
+              ? "violet"
+              : "gray"
+            : emphasis
+            ? "yellow"
+            : "violet"
+        }
         onClick={handleClick}
         disabled={!action.active && !action.used}
         tt="capitalize"

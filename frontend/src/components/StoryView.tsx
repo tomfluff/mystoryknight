@@ -2,7 +2,11 @@ import { Box, Group, Stack, Grid, Center, Loader, Text } from "@mantine/core";
 import StoryPart from "./StoryPart";
 import { useQuery } from "@tanstack/react-query";
 import getAxiosInstance from "../utils/axiosInstance";
-import { startStory, useAdventureStore } from "../stores/adventureStore";
+import {
+  setStoryState,
+  startStory,
+  useAdventureStore,
+} from "../stores/adventureStore";
 import { createCallContext } from "../utils/llmIntegration";
 
 const StoryView = () => {
@@ -22,7 +26,9 @@ const StoryView = () => {
           { signal }
         )
         .then((res) => {
-          startStory({ start: Date.now(), ...res.data.data });
+          const { state, ...storyData } = res.data.data;
+          startStory({ start: Date.now(), ...storyData });
+          if (state) setStoryState(state);
           return res.data.data;
         });
     },

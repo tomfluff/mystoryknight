@@ -19,11 +19,15 @@ def base64_image_url(image_path):
     return base64_url
 
 
-def save_base64_image(base64_string, save_path):
+def save_base64_image(base64_string, save_path, max_size=None):
     # Decode the base64 string and save the image file locally
     image_data = base64.b64decode(base64_string)
     image = Image.open(BytesIO(image_data))
-    image.save(save_path)
+    if max_size:
+        # The image models only emit 1024px and up, which is far larger than the
+        # story panel needs. Downscaling here cuts the bytes the client fetches.
+        image.thumbnail((max_size, max_size), Image.LANCZOS)
+    image.save(save_path, optimize=True)
 
 def logger_setup(name, location, debug=False):
     os.makedirs(os.path.dirname(location), exist_ok=True)

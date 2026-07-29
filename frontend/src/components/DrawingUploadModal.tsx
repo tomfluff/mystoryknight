@@ -8,6 +8,7 @@ import {
   Image,
   Modal,
   Loader,
+  Select,
 } from "@mantine/core";
 import Webcam from "react-webcam";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
@@ -15,7 +16,6 @@ import { useMutation } from "@tanstack/react-query";
 import getAxiosInstance from "../utils/axiosInstance";
 import { setCharacter } from "../stores/adventureStore";
 import { createCallContext } from "../utils/llmIntegration";
-import { useMemo } from "react";
 
 type Props = {
   display: boolean;
@@ -23,20 +23,20 @@ type Props = {
 };
 
 const DrawingUploadModal = ({ display, finalAction }: Props) => {
-  const { webcamRef, base64Capture, capture, clear } = useWebcam();
+  const {
+    webcamRef,
+    base64Capture,
+    capture,
+    clear,
+    devices,
+    deviceId,
+    setDeviceId,
+    refreshDevices,
+    videoConstraints,
+  } = useWebcam(true);
   const [click, { toggle: toggleClick }] = useDisclosure(false);
   const instance = getAxiosInstance();
   const isMobile = useMediaQuery("(max-width: 50em)");
-
-  const [webcamDirection, { toggle: toggleWebcamDirection }] = useDisclosure(
-    !isMobile
-  );
-
-  const videoConstraints = useMemo(() => {
-    return {
-      facingMode: webcamDirection ? "user" : { exact: "environment" },
-    };
-  }, [webcamDirection]);
 
   const uploadImage = useMutation({
     mutationKey: ["webcam"],
@@ -85,7 +85,26 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
       <Container>
         <Stack>
           {!click && (
-            <Webcam ref={webcamRef} videoConstraints={videoConstraints} />
+            <Select
+              data={devices.map((device, i) => ({
+                value: device.deviceId,
+                label: device.label || `Camera ${i + 1}`,
+              }))}
+              value={deviceId}
+              onChange={(value) => value && setDeviceId(value)}
+              placeholder={
+                devices.length === 0 ? "Detecting cameras…" : "Select camera"
+              }
+              allowDeselect={false}
+              disabled={devices.length === 0}
+            />
+          )}
+          {!click && (
+            <Webcam
+              ref={webcamRef}
+              videoConstraints={videoConstraints}
+              onUserMedia={refreshDevices}
+            />
           )}
           {click && base64Capture && (
             <Image src={base64Capture} alt="placeholder" />
@@ -118,16 +137,9 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
               </Grid.Col>
             )}
             {!click && (
-              <Grid.Col span={isMobile ? 8 : 12}>
+              <Grid.Col span={12}>
                 <Button onClick={handleCapture} fullWidth>
                   Capture
-                </Button>
-              </Grid.Col>
-            )}
-            {!click && isMobile && (
-              <Grid.Col span={4}>
-                <Button onClick={toggleWebcamDirection} fullWidth>
-                  Flip
                 </Button>
               </Grid.Col>
             )}

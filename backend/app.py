@@ -1,20 +1,37 @@
 import os, sys
 import random
+import time
 import uuid
+from base64 import b64encode
 from flask import Flask, jsonify, request, send_file, Response, stream_with_context
 from flask_cors import CORS
+from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import save_base64_image, logger_setup, get_mimetype, sample_frames
 from config import *
 from llm import Storyteller
+import story_state
 
 load_dotenv()
 
 # Specify the static folder path
 app = Flask(__name__)
-CORS(app)
+
+# Cloud Run terminates TLS and forwards over plain HTTP. Without this,
+# `request.host_url` builds http:// image URLs that an https:// page refuses to
+# load as mixed content.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
+# Only allow the frontend origins we actually deploy. A wildcard here lets any
+# site in a visitor's browser spend our OpenAI credit.
+CORS_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if o.strip()
+]
+CORS(app, origins=CORS_ORIGINS, methods=["GET", "POST"])
 
 
 # Get the environment variables
@@ -207,9 +224,15 @@ def premise_gen():
         complexity = data.get("complexity", None)
         context = data.get("context", None)
 
+        # The premise prompt is told to suit the character's traits, so send them.
         context = {
-            "name": context["fullname"],
-            "about": context["backstory"],
+            "name": context.get("fullname"),
+            "shortname": context.get("shortname"),
+            "about": context.get("backstory"),
+            "personality": context.get("personality"),
+            "likes": context.get("likes"),
+            "dislikes": context.get("dislikes"),
+            "fears": context.get("fears"),
         }
 
         result = llm.generate_premise(
@@ -243,16 +266,36 @@ def part_gen():
         complexity = data.get("complexity", None)
         context = data.get("context", None)
 
-        result = llm.generate_story_part(context, complexity)
+        # Client carries the story state; server advances it as a pure function.
+        # Legacy sessions (or old frontends) send only the prose blob -- build a
+        # degenerate state that self-heals on this very call.
+        state = context.get("state")
+        if not isinstance(state, dict) or "beat" not in state:
+            state = story_state.degenerate_from_blob(context.get("story", ""))
+        prompt_context = {
+            k: v
+            for k, v in context.items()
+            # past_actions only matters to /story/actions; here it is noise.
+            if k not in ("state", "story", "past_actions")
+        }
+        prompt_context.update(story_state.prompt_fields(state))
+
+        result = llm.generate_story_part(prompt_context, complexity)
+        part = result["part"]
+        state = story_state.advance_state(state, part["text"], result.get("state_update", {}) or {})
+        if story_state.needs_compaction(state):
+            state["summary"] = llm.compact_summary(
+                state["summary"], state["openThreads"]
+            )
+
         part_id = uuid.uuid4()
         if logger:
             logger.debug(f"Story part generated: {result}")
-        part = result["part"]
         return jsonify(
             type="success",
             message="Story part generated!",
             status=200,
-            data={"id": part_id, **part},
+            data={"id": part_id, **part, "state": state},
         )
     except Exception as e:
         if logger:
@@ -272,15 +315,28 @@ def story_init():
         complexity = data.get("complexity", None)
         context = data.get("context", None)
 
+        # The frontend sends character and premise merged flat. Reshape, and keep
+        # the full trait set -- the story prompts are told to stay true to it.
         context = {
-            "setting": context["desc"],
+            "premise": {
+                "title": context.get("title"),
+                "desc": context.get("desc"),
+            },
             "protagonist": {
-                "name": context["fullname"],
-                "about": context["backstory"],
+                "name": context.get("fullname"),
+                "shortname": context.get("shortname"),
+                "about": context.get("backstory"),
+                "personality": context.get("personality"),
+                "likes": context.get("likes"),
+                "dislikes": context.get("dislikes"),
+                "fears": context.get("fears"),
             },
         }
 
         result = llm.initialize_story(context, complexity)
+        state = story_state.initial_state(
+            result.pop("state_update", {}) or {}, result.get("text", "")
+        )
         story_id = uuid.uuid4()
         part_id = uuid.uuid4()
         if logger:
@@ -290,7 +346,7 @@ def story_init():
             type="success",
             message="Story initialized!",
             status=200,
-            data={"id": story_id, "parts": [{"id": part_id, **result}]},
+            data={"id": story_id, "parts": [{"id": part_id, **result}], "state": state},
         )
     except Exception as e:
         if logger:
@@ -311,6 +367,14 @@ def story_end():
         complexity = data.get("complexity", None)
         context = data.get("context", None)
 
+        # Replace the carried state object with the prompt-facing fields; keep
+        # the legacy `story` blob only when no state exists.
+        state = context.pop("state", None)
+        context.pop("past_actions", None)  # actions-endpoint concern, noise here
+        if isinstance(state, dict) and "beat" in state:
+            context.pop("story", None)
+            context.update(story_state.prompt_fields(state))
+            context.pop("phase", None)  # the ending is unconditional
         result = llm.terminate_story(context, complexity)
         if logger:
             logger.info(f"Story ended!")
@@ -340,17 +404,29 @@ def actions_gen():
         complexity = data.get("complexity", None)
         context = data.get("context", None)
 
+        # Same state normalization as /story/part and /story/end.
+        state = context.pop("state", None)
+        if isinstance(state, dict) and "beat" in state:
+            context.pop("story", None)
+            context.update(story_state.prompt_fields(state))
         result = llm.generate_actions(context, complexity, ACTION_GEN_COUNT)
-        actions = result["list"]
-        actions = random.sample(actions, ACTION_GEN_COUNT)
+        actions = result.get("list") or []
+        # The prompt asks for exactly ACTION_GEN_COUNT, but never trust the count:
+        # sampling more than the model returned raises ValueError.
+        actions = random.sample(actions, min(ACTION_GEN_COUNT, len(actions)))
+        # Stamp the kind in its own pass. Folding it into the comprehension below
+        # would let a model-emitted "kind" key override the server's classification.
+        actions = [{**a, "kind": "choice"} for a in actions]
         actions.append(
             {
+                "kind": "motion_capture",
                 "title": "Motion Capture",
                 "desc": "Use your body to progress the story!",
             }
         )
         actions.append(
             {
+                "kind": "ending",
                 "title": "Ending",
                 "desc": "Bring the story to an end and see what happens!",
             }
@@ -409,14 +485,44 @@ def storyimage_gen():
                 logger.error("No data found in the request!")
             return jsonify(type="error", message="No data found!", status=400)
 
+        # The client names the previous illustration; it is already stored on
+        # this server, so read it from disk instead of re-uploading megabytes.
+        # basename() so a crafted name cannot escape STORAGE_PATH.
+        prev_name = data.get("previous_image")
+        if prev_name:
+            prev_path = os.path.join(STORAGE_PATH, os.path.basename(str(prev_name)))
+            if os.path.isfile(prev_path):
+                with open(prev_path, "rb") as f:
+                    data["previous_image"] = b64encode(f.read()).decode()
+            else:
+                data.pop("previous_image", None)
+
+        t_start = time.time()
         result = llm.generate_story_image(data)
+        gen_seconds = round(time.time() - t_start, 1)
+
+        # The model returns base64. Persist it and hand back a URL instead:
+        # a ~2MB data URL per part would blow the client's sessionStorage quota.
+        os.makedirs(STORAGE_PATH, exist_ok=True)
+        img_fname = f"img_{uuid.uuid4().hex}.png"
+        save_base64_image(
+            result["image_b64"],
+            os.path.join(STORAGE_PATH, img_fname),
+            max_size=IMAGE_STORE_MAX_SIZE,
+        )
+        image_url = request.host_url.rstrip("/") + f"/api/image/{img_fname}"
+
         if logger:
-            logger.debug(f"Story image generated: {result}")
+            logger.debug(f"Story image generated: {image_url}")
         return jsonify(
             type="success",
             message="Story image generated!",
             status=200,
-            data={**result},
+            data={
+                "prompt": result["prompt"],
+                "image_url": image_url,
+                "seconds": gen_seconds,
+            },
         )
     except Exception as e:
         if logger:

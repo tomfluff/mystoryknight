@@ -4,7 +4,7 @@ import { createSelectors } from "../utils/createSelectors";
 import { TImage } from "../types/Image";
 import { TCharacter } from "../types/Character";
 import { TPremise } from "../types/Premise";
-import { TAction, TStory, TStoryPart } from "../types/Story";
+import { TAction, TStory, TStoryPart, TStoryState } from "../types/Story";
 
 const initialState = {
   id: null as string | null,
@@ -12,6 +12,9 @@ const initialState = {
   character: null as TCharacter | null,
   premise: null as TPremise | null,
   story: null as TStory | null,
+  // Optional on purpose: sessions persisted before this field existed
+  // rehydrate without it; buildStoryContext falls back to a degenerate state.
+  storyState: null as TStoryState | null,
   finished: false,
 };
 
@@ -31,6 +34,10 @@ export const useAdventureStore = createSelectors(
 
 export const clearStore = () => {
   useAdventureStore.setState(initialState);
+};
+
+export const setStoryState = (storyState: TStoryState) => {
+  useAdventureStore.setState(() => ({ storyState }));
 };
 
 export const setCharacter = (
@@ -96,7 +103,8 @@ export const chooseAction = (action: TAction) => {
     parts[parts.length - 1].actions = parts[parts.length - 1].actions?.map(
       (a) => {
         a.active = false;
-        if (a.title === action.title) {
+        // Match on id, not title: two actions can share a title.
+        if (a.id === action.id) {
           a.used = true;
         }
         return a;
@@ -123,11 +131,12 @@ export const canChooseAction = () => {
     ].actions?.every((a) => !a.used);
 };
 
-export const updateStoryImage = (image_url: string) => {
+export const updateStoryImage = (image_url: string, seconds?: number) => {
   useAdventureStore.setState((state) => {
     if (!state.story) return state;
     const parts = state.story.parts;
     parts[parts.length - 1].image = image_url;
+    parts[parts.length - 1].imageSeconds = seconds;
     return {
       story: {
         ...state.story,

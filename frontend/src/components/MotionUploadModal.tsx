@@ -24,9 +24,15 @@ type Props = {
 };
 
 const MotionUploadModal = ({ display, handleMotion, finalAction }: Props) => {
-  const { webcamRef, capture } = useWebcam();
-  const [userDevices, setUserDevices] = useState<MediaDeviceInfo[]>([]);
-  const [activeDevice, setActiveDevice] = useState<string | null>(null);
+  const {
+    webcamRef,
+    capture,
+    devices,
+    deviceId,
+    setDeviceId,
+    refreshDevices,
+    videoConstraints,
+  } = useWebcam();
   const [isCapturing, setIsCapturing] = useState(false);
   const [frames, setFrames] = useState<string[]>([]);
   const interval = useInterval(() => {
@@ -94,13 +100,15 @@ const MotionUploadModal = ({ display, handleMotion, finalAction }: Props) => {
             <Stack>
               <Box className="motion-upload__devices">
                 <Select
-                  data={userDevices.map((device) => ({
+                  data={devices.map((device, i) => ({
                     value: device.deviceId,
-                    label: device.label,
+                    label: device.label || `Camera ${i + 1}`,
                   }))}
-                  value={activeDevice}
-                  onChange={(value) => setActiveDevice(value)}
+                  value={deviceId}
+                  onChange={(value) => value && setDeviceId(value)}
                   placeholder="Select device"
+                  allowDeselect={false}
+                  disabled={devices.length === 0}
                 />
               </Box>
               <Box
@@ -123,21 +131,8 @@ const MotionUploadModal = ({ display, handleMotion, finalAction }: Props) => {
                 <Webcam
                   ref={webcamRef}
                   width="100%"
-                  videoConstraints={{
-                    deviceId: activeDevice ?? undefined,
-                  }}
-                  onUserMedia={() => {
-                    if (userDevices.length === 0)
-                      navigator.mediaDevices
-                        .enumerateDevices()
-                        .then((devices) => {
-                          const videoDevices = devices.filter(
-                            (device) => device.kind === "videoinput"
-                          );
-                          setUserDevices(videoDevices);
-                          setActiveDevice(videoDevices[0].deviceId);
-                        });
-                  }}
+                  videoConstraints={videoConstraints}
+                  onUserMedia={refreshDevices}
                 />
               </Box>
               <Grid>

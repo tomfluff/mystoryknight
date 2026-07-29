@@ -2,7 +2,8 @@ import { TEntity } from "./Entity";
 
 export type TColorUsage = {
   color: string;
-  usage: number;
+  // A short note on where the color is used, e.g. "the cat's fur".
+  usage: string;
 };
 
 export type TImage = {

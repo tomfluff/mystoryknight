@@ -8,12 +8,36 @@
  * <button onClick={() => captureWebcam()}>Capture</button>
  *
  */
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Webcam from "react-webcam";
 
-const useWebcam = () => {
+// `preferBack`: on phones, default to the rear camera (photographing a drawing)
+// rather than the selfie camera. Desktop labels never match, so it is a no-op there.
+const useWebcam = (preferBack = false) => {
   const webcamRef = useRef<Webcam>(null);
   const [base64Capture, setBase64Capture] = useState<string | null>(null);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [deviceId, setDeviceId] = useState<string | null>(null);
+
+  // Device labels are empty until the user grants camera permission, so call
+  // this from <Webcam onUserMedia>, not on mount.
+  const refreshDevices = useCallback(async () => {
+    const all = await navigator.mediaDevices.enumerateDevices();
+    const cameras = all.filter((d) => d.kind === "videoinput");
+    setDevices(cameras);
+    const preferred =
+      (preferBack && cameras.find((d) => /back|rear|environment/i.test(d.label))) ||
+      cameras[0];
+    // Keep an explicit choice; otherwise default to whatever the browser opened.
+    setDeviceId((current) => current ?? preferred?.deviceId ?? null);
+  }, [preferBack]);
+
+  // `deviceId` must be `exact`, otherwise it is only a hint and the browser is
+  // free to ignore it and keep the camera it already opened.
+  const videoConstraints = useMemo(
+    () => (deviceId ? { deviceId: { exact: deviceId } } : undefined),
+    [deviceId]
+  );
 
   // Capture photo from webcam
   const capture = useCallback(() => {
@@ -28,7 +52,17 @@ const useWebcam = () => {
     setBase64Capture(null);
   }, []);
 
-  return { webcamRef, base64Capture, capture, clear };
+  return {
+    webcamRef,
+    base64Capture,
+    capture,
+    clear,
+    devices,
+    deviceId,
+    setDeviceId,
+    refreshDevices,
+    videoConstraints,
+  };
 };
 
 export default useWebcam;
