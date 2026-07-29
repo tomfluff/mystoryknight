@@ -6,3 +6,11 @@ README.md
 __pycache__/
 .pytest_cache/
 *.gitignore
+
+# Never bake secrets or local runtime state into the image
+.env
+.env.*
+!.env.example
+logs/
+static/
+*.ipynb

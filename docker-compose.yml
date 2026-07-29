@@ -9,14 +9,23 @@ services:
       - 3000:3000
     volumes:
       - ./frontend:/app
-      - ./frontend/node_modules:/app/node_modules
+      # Named volume, not a host bind: node_modules is gitignored and does not
+      # exist on a fresh clone, and binding a missing host dir would mask the
+      # npm install done during the image build.
+      - fe_node_modules:/app/node_modules
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     env_file:
       - ./backend/.env
+    # Local dev only: the image's CMD is gunicorn (production). Override it here
+    # so code edits hot-reload against the bind mount below.
+    command: python app.py
     ports:
       - 5000:5000
     volumes:
       - ./backend:/app
+
+volumes:
+  fe_node_modules:
