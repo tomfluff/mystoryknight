@@ -39,7 +39,6 @@ marisa-trie==1.2.1
 MarkupSafe==3.0.2
 msgpack==1.0.7
 openai==1.58.1
-opencv-python-headless==4.10.0.84
 packaging==24.2
 pillow==11.0.0
 proto-plus==1.23.0

@@ -105,7 +105,7 @@ export const buildStoryContext = () => {
   };
 };
 
-export const createCallContext = (data: any) => {
+export const createCallContext = (data: unknown) => {
   const complexity = usePreferencesStore.getState().storyComplexity;
   const complexityPrompt = getComplexityPrompt(complexity);
   return {

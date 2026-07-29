@@ -91,11 +91,6 @@ function App() {
             {isPremise && <PremiseCard premise={premise!} />}
           </Flex>
         </AppShell.Section>
-        {/* <AppShell.Section>
-          <Group justify="center" p="sm">
-            <SpeechMonitor size="lg" feedback />
-          </Group>
-        </AppShell.Section> */}
       </AppShell.Navbar>
       <AppShell.Main w={rem("99vw")}>
         {(!isSession || !isCharacter || !isPremise) && <InstructionView />}

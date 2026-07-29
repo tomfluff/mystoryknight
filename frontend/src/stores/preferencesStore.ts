@@ -31,7 +31,7 @@ export const resetPreferences = () => {
   usePreferencesStore.setState(initialState);
 };
 
-export const setPreferences = (preferences: any) => {
+export const setPreferences = (preferences: Partial<typeof initialState>) => {
   usePreferencesStore.setState((state) => ({
     ...state,
     ...preferences,

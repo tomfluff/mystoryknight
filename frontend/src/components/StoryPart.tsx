@@ -39,6 +39,13 @@ type Props = {
   isNew: boolean;
 };
 
+/* Typed on purpose: these payloads were `any`, which let a TAction object be
+   sent where the prompt expected a string. */
+type TStoryCallContext = ReturnType<typeof buildStoryContext> & {
+  action?: string;
+  action_source?: "choice" | "chat";
+};
+
 /*
  * Actions carry an explicit `kind` from the backend. Stories already in
  * sessionStorage when that field shipped rehydrate without it, so fall back to
@@ -131,7 +138,7 @@ const StoryPart = ({ part, isNew }: Props) => {
 
   const outcome = useMutation({
     mutationKey: ["story-part"],
-    mutationFn: (context: any) => {
+    mutationFn: (context: TStoryCallContext) => {
       scrollIntoView();
       return instance
         .post("/story/part", createCallContext({ ...context }))
@@ -146,7 +153,7 @@ const StoryPart = ({ part, isNew }: Props) => {
 
   const ending = useMutation({
     mutationKey: ["story-end"],
-    mutationFn: (context: any) => {
+    mutationFn: (context: TStoryCallContext) => {
       return instance
         .post("/story/end", createCallContext(context))
         .then((res) => res.data.data);
@@ -184,7 +191,7 @@ const StoryPart = ({ part, isNew }: Props) => {
     if (isNew) {
       scrollIntoView();
     }
-  }, [isNew, text]);
+  }, [isNew, text, scrollIntoView]);
 
   const [captureModal, { open: openCapture, close: closeCapture }] =
     useDisclosure();

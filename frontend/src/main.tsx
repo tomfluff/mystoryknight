@@ -16,13 +16,17 @@ const theme = createTheme({
 // Import `createBrowserRouter` and `RouterProvider` from `react-router-dom`
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-const router = createBrowserRouter([
-  {
-    path: "/MyStoryKnight/",
-    element: <App />,
-    errorElement: <NotFoundTitle />,
-  },
-]);
+// basename comes from vite's `base`, so the repo path lives in one place.
+const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      element: <App />,
+      errorElement: <NotFoundTitle />,
+    },
+  ],
+  { basename: import.meta.env.BASE_URL }
+);
 
 // Import `QueryClientProvider` and `QueryClient` from `@tanstack/react-query`
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";

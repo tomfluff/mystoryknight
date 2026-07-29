@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      # Build with a placeholder API URL: this only proves the bundle compiles,
+      # the real value is baked in at deploy time.
+      - run: npm run build
+        env:
+          VITE_API_BASE_URL: http://localhost:5000/api
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      # Compile-check every module, then run the story_state self-check. No
+      # network and no API key needed -- story_state is pure functions.
+      - run: python -m compileall -q .
+      - run: python story_state.py
