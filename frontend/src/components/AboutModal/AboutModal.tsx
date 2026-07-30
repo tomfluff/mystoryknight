@@ -37,15 +37,14 @@ const AboutModal = () => {
             MyStoryKnight.
           </Title>
           <Text>
-            MyStoryKnight is a collaborative storytelling game for children and
-            adults. It is designed to be played by two or more players, and can
-            be played in person or online. The game is designed to be played in
-            a group, and is suitable for children and adults of all ages.
+            MyStoryKnight is a storytelling game for children. Draw a character
+            and it becomes the hero of an illustrated adventure, one part at a
+            time.
           </Text>
           <Text>
-            Use your imagination to draw a unique character you want to follow
-            the story with. Choose how the story unfolds at each stage and be the
-            great storyteller you are.
+            You decide what happens next at every turn, so no two stories end up
+            the same. Everything can be read aloud, which makes it as good to
+            play beside someone as on your own.
           </Text>
           <Divider />
           <Box>
