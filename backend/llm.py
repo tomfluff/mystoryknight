@@ -289,7 +289,16 @@ SCHEMA_GENERATE_CHARACTER = {
 
 class Storyteller:
     def __init__(self, key, org) -> None:
-        self.llm = OpenAI(api_key=key, organization=org)
+        # Placeholder rather than None when the key is absent: OpenAI() raises on
+        # a missing key, and this runs at import, so the container would never
+        # bind its port -- Cloud Run then reports only "failed to start and
+        # listen on PORT" with no mention of the real cause. Starting up and
+        # returning a 401 per request is far easier to diagnose.
+        if not key and logger:
+            logger.error(
+                "OPENAI_API_KEY is not set -- every LLM call will fail with 401."
+            )
+        self.llm = OpenAI(api_key=key or "OPENAI_API_KEY_NOT_SET", organization=org or None)
         self.gpt4 = MODEL_GPT4
         self.gpt3 = MODEL_GPT3
         self.vision = MODEL_VISION
