@@ -43,8 +43,8 @@ const AboutModal = () => {
             a group, and is suitable for children and adults of all ages.
           </Text>
           <Text>
-            Use your imagination to draw a unique charater you want follow the
-            story with. Choose how the story unfolds at each stage and be the
+            Use your imagination to draw a unique character you want to follow
+            the story with. Choose how the story unfolds at each stage and be the
             great storyteller you are.
           </Text>
           <Divider />
