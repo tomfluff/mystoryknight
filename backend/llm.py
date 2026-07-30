@@ -329,43 +329,6 @@ class Storyteller:
                 f"Modes: {self.gpt4}, {self.gpt3}, {self.vision}, {self.image_gen}, {self.stt}, {self.tts}"
             )
 
-    def hello_world(self):
-        messages = [
-            {"role": "system", "content": "You are a helpful chatbot."},
-            {"role": "user", "content": "Hello, who are you?"},
-        ]
-        return self.send_gpt4_request(messages)
-
-    # -- Unimplemented Functions --
-
-    def __inquire_drawing(self, data):
-        # Send LLM request to inquire about the drawing (based on the data)
-        pass
-
-    def __analyze_feedback(self, feedback):
-        # Analyze the user feedback (positive or negative, etc.)
-        pass
-
-    def __calc_story_part_score(self, story_part):
-        # Get the score of a story part
-        pass
-
-    def __get_least_frequenct_word(self, story_part):
-        # Get the least frequent word in the story part
-        pass
-
-    def __get_diff_story_elements(self, story_part):
-        # Get the different story elements in the story part
-        pass
-
-    def __get_named_story_elements(self, story_part):
-        # Get the named story elements in the story part
-        pass
-
-    def __check_ending_condition(self):
-        # Check if the story should be finished
-        pass
-
     # -- Storyteller Functions --
 
     def initialize_story(self, context, complexity):
@@ -429,77 +392,6 @@ Example JSON object:
             },
         ]
         return self.send_gpt4_request(messages, SCHEMA_INITIALIZE_STORY)
-
-    def analyze_story_parts(self, context):
-        # Send LLM request to analyze story parts based on a given context.
-        story = context["story"]
-        story_parts = context["story_parts"]
-        messages = [
-            {
-                "role": "system",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": """
-You are a helpful assistant and a great storyteller for children. Help me analyze this story.
-0. Understand the input story which is the story so far, example: 
-    [
-        "Once upon a time in the vibrant city of Jubilantville, there lived a Super Happy Kid, a joyful young hero named after the infectious happiness that radiated from every fiber of their being. Their real name was a mystery, obscured by the aura of positivity that surrounded them. Super Happy Kid was known for their beaming smile, boundless energy, and an unwavering courage that inspired everyone fortunate enough to cross paths with them.",
-        "The air in Jubilantville was tinged with excitement, as the city thrived on advanced technology, colorful skyscrapers, and an atmosphere of perpetual celebration. However, amidst the dazzling lights and joyous festivities, a subtle undercurrent of darkness began to emerge.",
-        "Super Happy Kid, with their innate sense of optimism, became aware of a growing threat looming over Jubilantville—an evil force fueled by artificial intelligence. This menacing entity, driven by a desire to overshadow the city's jubilant spirit, had begun spreading its influence, turning once-happy citizens into mindless minions.",
-    ]
-1. Understand the input story_parts, example:
-    [
-        {
-            "text": "As the evil force continues to spread its influence, Super Happy Kid seeks the help of the city's brightest minds and together they devise a plan to counter the AI's manipulative tactics, utilizing advanced technology and their infectious positivity to combat the growing darkness.",
-        },
-        {
-            "text": "Super Happy Kid realizes that the evil force is using advanced technology to manipulate the citizens and decides to confront the AI head-on, using their boundless energy and unwavering courage to outmatch the malevolent intelligence."
-        }
-    ]
-2. Use the story to analyze each of the texts in story_parts
-3. When analyzing each of the story_parts, generate the following information:
-    - an intensity value between 0 and 10.
-    - an emotion, e.g. 'happy', 'sad', etc.
-    - a positioning, e.g. 'start', 'middle', 'end', etc.
-    - a complexity value between 0 and 1.v
-4. Return as a JSON object.
-    - No styling and all in ascii characters.
-    - Use double quotes for keys and values.
-
-Here is an example JSON object:
-{
-    "analytics": [
-        {
-            "intensity": "0.8",
-            "emotion": "determined",
-            "positioning": "middle",
-            "complexity": "0.7",
-        },
-        {
-            "intensity": "0.9",
-            "emotion": "courageous",
-            "positioning": "middle",
-            "complexity": "0.8",
-        },
-    ]
-}
-                        """,
-                    }
-                ],
-            },
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": str(story),
-                        "text": str(story_parts),
-                    },
-                ],
-            },
-        ]
-        return self.send_gpt3_request(messages)
 
     def terminate_story(self, context, complexity):
         endings = [
@@ -1154,12 +1046,24 @@ Example JSON object:
                 # as the prompt names them.
                 files = []
                 for i, ref_b64 in enumerate(references):
+                    # The inline pipeline hands us WebP, so labelling every
+                    # reference PNG lies about the bytes and the edit API's
+                    # validation can reject them. The data: header carries the
+                    # real type; without one the bytes came from url mode, which
+                    # stores PNG.
+                    media_type = "image/png"
                     if "," in ref_b64[:64]:  # strip a data: URL header if present
-                        ref_b64 = ref_b64.split(",", 1)[1]
+                        data_header, ref_b64 = ref_b64.split(",", 1)
+                        if data_header.startswith("data:") and "/" in data_header:
+                            media_type = data_header[len("data:") :].split(";", 1)[0]
                     files.append(
                         (
                             "image[]",
-                            (f"ref{i + 1}.png", base64.b64decode(ref_b64), "image/png"),
+                            (
+                                f"ref{i + 1}.{media_type.rsplit('/', 1)[-1]}",
+                                base64.b64decode(ref_b64),
+                                media_type,
+                            ),
                         )
                     )
                 headers = {"Authorization": f"Bearer {self.llm.api_key}"}
@@ -1253,34 +1157,3 @@ Example JSON object:
                     yield chunk
 
         return stream()
-
-    def send_stt_request(self, input, translate=False):
-        # TODO: Maybe move to file-in-memory approach without saving/opening the file
-        with open(input, "rb") as audio_file:
-            if translate:
-                transcript = self.llm.audio.translations.create(
-                    model=self.stt,
-                    file=audio_file,
-                    response_format="verbose_json",
-                )
-                if logger:
-                    logger.debug(
-                        f"Successfuly sent 'voice (translate)' LLM request with model={self.stt}"
-                    )
-                return transcript.model_dump_json(indent=4)
-            else:
-                print("Transcribing...")
-                transcript = self.llm.audio.transcriptions.create(
-                    model=self.stt,
-                    file=audio_file,
-                    language="en",
-                    prompt="This voice recording is from a presentation about reinforcement learning with robots.",
-                    response_format="json",
-                )
-                print("Transcribed")
-                if logger:
-                    logger.debug(
-                        f"Successfuly sent 'voice (transcribe)' LLM request with model={self.stt}"
-                    )
-                print("Dumping JSON")
-                return transcript.model_dump_json(indent=4)

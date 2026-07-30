@@ -4,11 +4,12 @@
 MODEL_VISION = "gpt-5.6-terra"
 MODEL_GPT4 = "gpt-5.6-terra"
 MODEL_GPT3 = "gpt-5.6-luna"
-# gpt-image-1-mini: fastest/cheapest tier (measured ~12-13s at low on edits,
-# ~$0.006/image). Does not support input_fidelity -- keep it empty or the API
-# 400s. Alternatives, all measured on edits with a reference image:
+# In use: gpt-image-2. Takes no input_fidelity param, and measured ~23-32s at
+# low quality on edits -- 70s at medium, so do NOT use medium.
+# Alternatives, all measured on edits with a reference image:
+#   gpt-image-1-mini: fastest/cheapest, ~12-13s at low, ~$0.006/image. Rejects
+#     input_fidelity too -- keep it empty or the API 400s.
 #   gpt-image-1.5 + fidelity=high: ~15-19s, ~$0.05 low / ~$0.08 medium
-#   gpt-image-2 (no fidelity param): ~23-32s low, 70s medium (do NOT use medium)
 MODEL_IMAGE_GEN = "gpt-image-2"
 # Only sent when non-empty, and only on the edits (reference image) path.
 # Values: high | low (gpt-image-1 / 1.5 only).
@@ -48,7 +49,6 @@ LLM_REASONING_EFFORT = "low"
 
 # App settings
 APP_IMAGE_EXT = ["jpg", "jpeg", "png"]
-FLASK_DEBUG = True
 PREMISE_GEN_COUNT = 3
 ACTION_GEN_COUNT = 2
 
