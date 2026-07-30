@@ -11,6 +11,8 @@ import {
   Stack,
   Loader,
   Skeleton,
+  Button,
+  Text,
 } from "@mantine/core";
 import { useMediaQuery, useScrollIntoView } from "@mantine/hooks";
 import ReadController from "./ReadController";
@@ -70,7 +72,14 @@ const StoryPart = ({ part, isNew }: Props) => {
 
   const user_avatar = useSessionStore.use.avatar();
 
-  const { data: text, isLoading: textLoading } = useTranslation(part.text);
+  const {
+    data: text,
+    isError: textError,
+    isLoading: textLoading,
+  } = useTranslation(part.text);
+  // Translation is a nicety, the passage is not. A failed translate call used
+  // to render an empty bubble; show the original text instead.
+  const displayText = textError ? part.text : text;
 
   const autoReadStorySections = usePreferencesStore.use.autoReadStorySections();
   const includeStoryImages = usePreferencesStore.use.includeStoryImages();
@@ -78,7 +87,11 @@ const StoryPart = ({ part, isNew }: Props) => {
   const finished = useAdventureStore.use.finished();
   const storyPhase = useAdventureStore.use.storyState()?.beat.phase;
 
-  const { isLoading: actionLoading } = useQuery({
+  const {
+    isLoading: actionLoading,
+    isError: actionError,
+    refetch: refetchActions,
+  } = useQuery({
     queryKey: ["actions", part.id],
     queryFn: ({ signal }) => {
       return instance
@@ -267,11 +280,11 @@ const StoryPart = ({ part, isNew }: Props) => {
                 {textLoading && (
                   <Loader color="white" size="sm" type="dots" p={0} m={0} />
                 )}
-                {text && text}
+                {displayText && displayText}
               </Paper>
               <ReadController
                 id={part.id}
-                text={text}
+                text={displayText}
                 autoPlay={isNew && autoReadStorySections}
               />
             </Stack>
@@ -335,6 +348,23 @@ const StoryPart = ({ part, isNew }: Props) => {
             })}
           {(actionLoading || outcome.isPending || ending.isPending) && (
             <Loader color="gray" size="md" />
+          )}
+          {/* Without these the story just stops: no choices arrive, or a failed
+              continuation restores the buttons with nothing to say why. */}
+          {actionError && (
+            <Button
+              size="sm"
+              variant="light"
+              color="red"
+              onClick={() => refetchActions()}
+            >
+              Choices did not load. Try again
+            </Button>
+          )}
+          {(outcome.isError || ending.isError) && (
+            <Text size="sm" c="red">
+              That did not work. Pick again.
+            </Text>
           )}
         </Flex>
       </Stack>
