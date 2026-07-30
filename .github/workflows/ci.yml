@@ -12,13 +12,19 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "18"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
+      # The registry hands out the occasional ECONNRESET mid-install; retry
+      # rather than let a network blip read as a broken build.
+      - name: npm ci (retry on registry flake)
+        run: |
+          npm ci --no-audit --fund=false \
+            || { sleep 10; rm -rf node_modules; npm ci --no-audit --fund=false; } \
+            || { sleep 30; rm -rf node_modules; npm ci --no-audit --fund=false; }
       - run: npx tsc --noEmit
       - run: npm run lint
       # Build with a placeholder API URL: this only proves the bundle compiles,
@@ -33,8 +39,8 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.10"
       # Compile-check every module, then run the story_state self-check. No
