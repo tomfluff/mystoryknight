@@ -25,6 +25,11 @@ app = Flask(__name__)
 # load as mixed content.
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
+# The largest payload we legitimately receive is a child's drawing as a base64
+# data URL, which fits well inside this. Without a cap, anyone can make us
+# decode an arbitrarily large body before a single validation runs.
+app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024
+
 # Only allow the frontend origins we actually deploy. A wildcard here lets any
 # site in a visitor's browser spend our OpenAI credit.
 CORS_ORIGINS = [
@@ -46,6 +51,11 @@ DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "t")
 LOGGER = os.environ.get("LOGGER", "False").lower() in ("true", "1", "t")
 STORAGE_PATH = "static"
 
+# /translate and /read are unauthenticated and spend OpenAI credit per call, so
+# the text they accept is bounded. A generated story part runs a few hundred
+# characters, so 5000 leaves room for the longest one plus a title.
+MAX_TEXT_LENGTH = 5000
+
 if LOGGER:
     logger = logger_setup("app", os.path.join(LOG_FOLDER, "app.log"), debug=DEBUG)
 else:
@@ -54,6 +64,21 @@ else:
 
 # Initialize the storyteller
 llm = Storyteller(OPENAI_API_KEY, OPENAI_ORG_ID)
+
+
+def server_error(e):
+    """The reply every route gives when it hits an unexpected exception.
+
+    The exception text names the provider and our internals, and every endpoint
+    here is reachable without authentication, so the caller only learns that
+    something broke. The detail has to survive somewhere, though: `logger` is
+    None unless LOGGER is set, which it is not in production, so app.logger
+    carries the traceback to stderr and from there to Cloud Logging.
+    """
+    app.logger.exception("Unhandled error in %s", request.path)
+    if logger:
+        logger.error(str(e))
+    return jsonify(type="error", message="Internal server error!", status=500), 500
 
 
 @app.route("/api")
@@ -150,7 +175,10 @@ def image_save():
 
 @app.route("/api/image/<img_name>", methods=["GET"])
 def image_get(img_name):
-    # Get the base64 image
+    # Get the base64 image. Strip any directory part first, the same way
+    # storage.read_story_image does, so the name can only ever resolve inside
+    # STORAGE_PATH.
+    img_name = os.path.basename(img_name)
     img_path = os.path.join(STORAGE_PATH, img_name)
     img_type = img_name.split(".")[-1]
 
@@ -194,14 +222,7 @@ def character_gen():
             },
         )
     except Exception as e:
-        if logger:
-            logger.error(str(e))
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/api/character/<char_id>", methods=["GET"])
-def character_get(char_id):
-    pass
+        return server_error(e)
 
 
 @app.route("/api/session", methods=["GET"])
@@ -217,14 +238,7 @@ def session_init():
             data={"id": session_id},
         )
     except Exception as e:
-        if logger:
-            logger.error(str(e))
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/api/session/<session_id>", methods=["GET"])
-def session_get(session_id):
-    pass
+        return server_error(e)
 
 
 @app.route("/api/story/premise", methods=["POST"])
@@ -264,9 +278,7 @@ def premise_gen():
             data={**result},
         )
     except Exception as e:
-        if logger:
-            logger.error(str(e))
-        return jsonify({"error": str(e)}), 500
+        return server_error(e)
 
 
 @app.route("/api/story/part", methods=["POST"])
@@ -313,9 +325,7 @@ def part_gen():
             data={"id": part_id, **part, "state": state},
         )
     except Exception as e:
-        if logger:
-            logger.error(str(e))
-        return jsonify({"error": str(e)}), 500
+        return server_error(e)
 
 
 @app.route("/api/story/init", methods=["POST"])
@@ -364,9 +374,7 @@ def story_init():
             data={"id": story_id, "parts": [{"id": part_id, **result}], "state": state},
         )
     except Exception as e:
-        if logger:
-            logger.error(str(e))
-        return jsonify({"error": str(e)}), 500
+        return server_error(e)
 
 
 @app.route("/api/story/end", methods=["POST"])
@@ -378,7 +386,6 @@ def story_end():
                 logger.error("No data found in the request!")
             return jsonify(type="error", message="No data found!", status=400), 400
 
-        print(data)
         complexity = data.get("complexity", None)
         context = data.get("context", None)
 
@@ -402,9 +409,7 @@ def story_end():
             data={"id": part_id, **part},
         )
     except Exception as e:
-        if logger:
-            logger.error(str(e))
-        return jsonify({"error": str(e)}), 500
+        return server_error(e)
 
 
 @app.route("/api/story/actions", methods=["POST"])
@@ -465,9 +470,7 @@ def actions_gen():
             data={"list": actions},
         )
     except Exception as e:
-        if logger:
-            logger.error(str(e))
-        return jsonify({"error": str(e)}), 500
+        return server_error(e)
 
 
 @app.route("/api/story/image", methods=["POST"])
@@ -516,9 +519,7 @@ def storyimage_gen():
             },
         )
     except Exception as e:
-        if logger:
-            logger.error(str(e))
-        return jsonify({"error": str(e)}), 500
+        return server_error(e)
 
 
 @app.route("/api/translate", methods=["GET"])
@@ -527,6 +528,11 @@ def translate_text():
         text = request.args.get("text")
         src_lang = request.args.get("src_lang")
         tgt_lang = request.args.get("tgt_lang")
+
+        if not text or len(text) > MAX_TEXT_LENGTH:
+            if logger:
+                logger.error("Missing or oversized text!")
+            return jsonify(type="error", message="Invalid text!", status=400), 400
 
         if src_lang == tgt_lang:
             if logger:
@@ -548,9 +554,7 @@ def translate_text():
             data={"text": result},
         )
     except Exception as e:
-        if logger:
-            logger.error(str(e))
-        return jsonify({"error": str(e)}), 500
+        return server_error(e)
 
 
 @app.route("/api/read", methods=["GET"])
@@ -558,6 +562,12 @@ def read_text():
     try:
         text = request.args.get("text")
         os = request.args.get("os", "undetermined")
+
+        if not text or len(text) > MAX_TEXT_LENGTH:
+            if logger:
+                logger.error("Missing or oversized text!")
+            return jsonify(type="error", message="Invalid text!", status=400), 400
+
         if logger:
             logger.debug(f"Generating speech for: {text}")
 
@@ -567,14 +577,19 @@ def read_text():
             mimetype=mimetype,
         )
     except Exception as e:
-        if logger:
-            logger.error(str(e))
-        return jsonify({"error": str(e)}), 500
+        return server_error(e)
 
 
 @app.errorhandler(404)
 def not_found(e):
     return jsonify(type="error", message="Not found!", status=404), 404
+
+
+@app.errorhandler(413)
+def too_large(e):
+    # MAX_CONTENT_LENGTH makes Flask reject the body itself, but its default
+    # reply is an HTML page the frontend's axios cannot read like the rest.
+    return jsonify(type="error", message="Request too large!", status=413), 413
 
 
 if __name__ == "__main__":
