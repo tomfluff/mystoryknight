@@ -47,3 +47,59 @@ jobs:
       # network and no API key needed -- story_state is pure functions.
       - run: python -m compileall -q .
       - run: python story_state.py
+
+  # Publishes the frontend to GitHub Pages on every push to main. The backend
+  # is still deployed by hand -- see the README.
+  deploy:
+    if: github.event_name == 'push'
+    needs: [frontend, backend]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    # Two deploys must not race. Queue instead of cancelling, so the run that
+    # wins is the newest commit rather than whichever finished last.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v5
+      # An unset variable would build a bundle whose API calls all resolve
+      # against github.io and fail. Stop here instead of shipping that.
+      - name: Check the API URL is set
+        run: |
+          test -n "$VITE_API_BASE_URL" || {
+            echo "Set the VITE_API_BASE_URL repository variable to the Cloud Run URL, ending in /api"
+            exit 1
+          }
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "18"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: npm ci (retry on registry flake)
+        run: |
+          npm ci --no-audit --fund=false \
+            || { sleep 10; rm -rf node_modules; npm ci --no-audit --fund=false; } \
+            || { sleep 30; rm -rf node_modules; npm ci --no-audit --fund=false; }
+      # Rebuilt rather than reusing the frontend job's bundle, which is
+      # compiled against a placeholder URL.
+      - run: npm run build
+      # enablement flips the repo from the legacy gh-pages branch source to
+      # this workflow on the first run, so there is no manual settings step.
+      - uses: actions/configure-pages@v6
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: frontend/dist
+      - id: pages
+        uses: actions/deploy-pages@v5

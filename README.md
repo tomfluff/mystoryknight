@@ -95,10 +95,19 @@ history. Check the target project first with `gcloud config get project`.
 excludes `.env` -- keep that entry, because the Dockerfile does `COPY . .` and
 would otherwise bake the API key into a pullable image layer.
 
-Frontend on GitHub Pages: set `VITE_API_BASE_URL` in `frontend/.env` to the
-Cloud Run URL (`https://<service>-<hash>.us-central1.run.app/api`), then run
-`npm run deploy` from `frontend/` -- npm runs the `predeploy` build itself. It
-publishes to the `gh-pages` branch, served at
-<https://tomfluff.github.io/mystoryknight/>. Pages paths are case-sensitive:
-`base` in `vite.config.ts` must match the repository name exactly, and the
-router takes its `basename` from that value.
+The frontend deploys itself: every push to `main` builds it and publishes to
+GitHub Pages at <https://tomfluff.github.io/mystoryknight/>, once the `frontend`
+and `backend` checks pass. The API URL comes from the `VITE_API_BASE_URL`
+repository variable, not from `frontend/.env`, so point it at the Cloud Run URL
+(`https://<service>-<hash>.us-central1.run.app/api`) and redeploy the backend
+before changing it:
+
+```bash
+gh variable set VITE_API_BASE_URL --body "https://<service>-<hash>.us-central1.run.app/api"
+```
+
+It is a variable rather than a secret on purpose -- the value is compiled into
+the bundle and readable by anyone in devtools, so hiding it would only hide it
+from you. Pages paths are case-sensitive: `base` in `vite.config.ts` must match
+the repository name exactly, and the router takes its `basename` from that
+value.
