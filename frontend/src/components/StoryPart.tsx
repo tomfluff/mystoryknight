@@ -21,6 +21,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   appendStory,
   chooseAction,
+  restoreActions,
   setFinished,
   setStoryState,
   updateActions,
@@ -85,7 +86,7 @@ const StoryPart = ({ part, isNew }: Props) => {
           signal,
         })
         .then((res) => {
-          updateActions(res.data.data.list);
+          updateActions(part.id, res.data.data.list);
           scrollIntoView();
           return res.data.data.list;
         });
@@ -131,7 +132,11 @@ const StoryPart = ({ part, isNew }: Props) => {
           { signal }
         )
         .then((res) => {
-          updateStoryImage(res.data.data.image_url, res.data.data.seconds);
+          updateStoryImage(
+            part.id,
+            res.data.data.image_url,
+            res.data.data.seconds
+          );
           return res.data.data;
         });
     },
@@ -153,6 +158,9 @@ const StoryPart = ({ part, isNew }: Props) => {
       appendStory(part);
       if (state) setStoryState(state);
     },
+    // Put the choices back. chooseAction disabled all of them before the
+    // request, so without this a single failed call ends the story for good.
+    onError: () => restoreActions(part.id),
   });
 
   const ending = useMutation({
@@ -166,6 +174,7 @@ const StoryPart = ({ part, isNew }: Props) => {
       appendStory(data);
       setFinished();
     },
+    onError: () => restoreActions(part.id),
   });
 
   const handleActionClick = (
@@ -173,9 +182,12 @@ const StoryPart = ({ part, isNew }: Props) => {
     chat: { character: string; message: string } | null = null
   ) => {
     if (!action.active) return;
-    chooseAction(action);
+    // Build the context before disabling anything: the early return below used
+    // to leave the actions disabled with no request in flight to re-enable
+    // them, which is the same dead end a failed request caused.
     const context = buildStoryContext();
     if (!context.state) return;
+    chooseAction(part.id, action);
     if (actionKind(action) === "ending") {
       ending.mutate(context);
     } else {
