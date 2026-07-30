@@ -286,6 +286,22 @@ SCHEMA_GENERATE_CHARACTER = {
     },
 }
 
+SCHEMA_TRANSLATE_TEXT = {
+    "name": "translate_text",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "translation": {
+                "type": "string",
+                "description": "The input text rendered in the target language, nothing else.",
+            }
+        },
+        "required": ["translation"],
+        "additionalProperties": False,
+    },
+}
+
 
 class Storyteller:
     def __init__(self, key, org) -> None:
@@ -997,8 +1013,7 @@ Translate text from %s to %s.
 
 Example JSON object:
 {
-    "original": "...",
-    "translation": "...",
+    "translation": "..."
 }
 """
                         % (source, target),
@@ -1016,7 +1031,7 @@ Example JSON object:
             },
         ]
 
-        response = self.send_gpt3_request(messages)
+        response = self.send_gpt3_request(messages, SCHEMA_TRANSLATE_TEXT)
         data = response["translation"]
         if logger:
             logger.debug(f"Translated text: {data}")

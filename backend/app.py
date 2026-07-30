@@ -105,29 +105,43 @@ def index():
 
 @app.route("/api/image", methods=["POST"])
 def image_save():
-    os.makedirs(STORAGE_PATH, exist_ok=True)
-    # Save the base64 image
-    data = request.get_json()
+    # Read and validate before touching the payload. The old order indexed
+    # data["image"] and split it BEFORE the guards below could run, so a
+    # missing key raised KeyError and an empty or comma-less value raised
+    # IndexError -- and with no handler on this route, both surfaced as 500s.
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify(type="error", message="No data found!", status=400), 400
 
-    base64_url = data["image"]
-    img_data = base64_url.split(",", 1)[1]
-    img_type = data["type"]
+    base64_url = data.get("image")
+    img_type = data.get("type")
 
-    if not base64_url:
+    if not isinstance(base64_url, str) or not base64_url:
         if logger:
             logger.error("No image found in the request!")
             logger.debug(data)
-        return jsonify(type="error", message="No image found!", status=400)
+        return jsonify(type="error", message="No image found!", status=400), 400
 
     if img_type not in APP_IMAGE_EXT:
         if logger:
             logger.error("Invalid image type!")
             logger.debug(data)
-        return jsonify(type="error", message="Invalid image type!", status=400)
+        return jsonify(type="error", message="Invalid image type!", status=400), 400
 
+    # [-1] rather than [1]: takes the payload after a data: header when there is
+    # one, the whole string when there is not, and cannot IndexError either way.
+    img_data = base64_url.split(",", 1)[-1]
     img_fname = f"img_{uuid.uuid4().hex}.{img_type}"
     img_path = os.path.join(STORAGE_PATH, img_fname)
-    save_base64_image(img_data, img_path)
+    try:
+        os.makedirs(STORAGE_PATH, exist_ok=True)
+        save_base64_image(img_data, img_path)
+    except Exception as e:
+        # Undecodable base64, a non-image payload, a truncated file: all of them
+        # are the caller's mistake, so answer 400 rather than 500.
+        if logger:
+            logger.error(f"Image could not be saved: {e}")
+        return jsonify(type="error", message="Invalid image data!", status=400), 400
 
     if logger:
         logger.info(f"Image saved: {img_path}")
@@ -143,7 +157,7 @@ def image_get(img_name):
     if not os.path.exists(img_path):
         if logger:
             logger.error(f"Image not found: {img_path}")
-        return jsonify(type="error", message="Image not found!", status=404)
+        return jsonify(type="error", message="Image not found!", status=404), 404
 
     if logger:
         logger.info(f"Image sent: {img_path}")
@@ -157,7 +171,7 @@ def character_gen():
         if not data:
             if logger:
                 logger.error("No data found in the request!")
-            return jsonify(type="error", message="No data found!", status=400)
+            return jsonify(type="error", message="No data found!", status=400), 400
 
         complexity = data.get("complexity", None)
         context = data.get("context", None)
@@ -166,7 +180,7 @@ def character_gen():
             if logger:
                 logger.error("No image found in the request!")
                 logger.debug(data)
-            return jsonify(type="error", message="No image found!", status=400)
+            return jsonify(type="error", message="No image found!", status=400), 400
 
         result = llm.generate_character(image, complexity)
         return jsonify(
@@ -220,7 +234,7 @@ def premise_gen():
         if not data:
             if logger:
                 logger.error("No data found in the request!")
-            return jsonify(type="error", message="No data found!", status=400)
+            return jsonify(type="error", message="No data found!", status=400), 400
 
         complexity = data.get("complexity", None)
         context = data.get("context", None)
@@ -262,7 +276,7 @@ def part_gen():
         if not data:
             if logger:
                 logger.error("No data found in the request!")
-            return jsonify(type="error", message="No data found!", status=400)
+            return jsonify(type="error", message="No data found!", status=400), 400
 
         complexity = data.get("complexity", None)
         context = data.get("context", None)
@@ -311,7 +325,7 @@ def story_init():
         if not data:
             if logger:
                 logger.error("No data found in the request!")
-            return jsonify(type="error", message="No data found!", status=400)
+            return jsonify(type="error", message="No data found!", status=400), 400
 
         complexity = data.get("complexity", None)
         context = data.get("context", None)
@@ -362,7 +376,7 @@ def story_end():
         if not data:
             if logger:
                 logger.error("No data found in the request!")
-            return jsonify(type="error", message="No data found!", status=400)
+            return jsonify(type="error", message="No data found!", status=400), 400
 
         print(data)
         complexity = data.get("complexity", None)
@@ -400,7 +414,7 @@ def actions_gen():
         if not data:
             if logger:
                 logger.error("No data found in the request!")
-            return jsonify(type="error", message="No data found!", status=400)
+            return jsonify(type="error", message="No data found!", status=400), 400
 
         complexity = data.get("complexity", None)
         context = data.get("context", None)
@@ -463,7 +477,7 @@ def storyimage_gen():
         if not data:
             if logger:
                 logger.error("No data found in the request!")
-            return jsonify(type="error", message="No data found!", status=400)
+            return jsonify(type="error", message="No data found!", status=400), 400
 
         # `previous_image` arrives either as a data URL (inline mode: the client
         # holds the bytes, since nothing is stored) or as a filename (url mode:
@@ -560,7 +574,7 @@ def read_text():
 
 @app.errorhandler(404)
 def not_found(e):
-    return jsonify(type="error", message="Not found!", status=404)
+    return jsonify(type="error", message="Not found!", status=404), 404
 
 
 if __name__ == "__main__":
