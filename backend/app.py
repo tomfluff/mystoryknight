@@ -12,6 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import save_base64_image, logger_setup, get_mimetype
 from config import *
 from llm import Storyteller
+import storage
 import story_state
 
 load_dotenv()
@@ -464,15 +465,13 @@ def storyimage_gen():
                 logger.error("No data found in the request!")
             return jsonify(type="error", message="No data found!", status=400)
 
-        # The client names the previous illustration; it is already stored on
-        # this server, so read it from disk instead of re-uploading megabytes.
-        # basename() so a crafted name cannot escape STORAGE_PATH.
+        # The client names the previous illustration; it is already stored, so
+        # fetch the bytes here instead of having the browser re-upload megabytes.
         prev_name = data.get("previous_image")
         if prev_name:
-            prev_path = os.path.join(STORAGE_PATH, os.path.basename(str(prev_name)))
-            if os.path.isfile(prev_path):
-                with open(prev_path, "rb") as f:
-                    data["previous_image"] = b64encode(f.read()).decode()
+            prev_bytes = storage.read_story_image(prev_name, STORAGE_PATH)
+            if prev_bytes:
+                data["previous_image"] = b64encode(prev_bytes).decode()
             else:
                 data.pop("previous_image", None)
 
@@ -482,14 +481,9 @@ def storyimage_gen():
 
         # The model returns base64. Persist it and hand back a URL instead:
         # a ~2MB data URL per part would blow the client's sessionStorage quota.
-        os.makedirs(STORAGE_PATH, exist_ok=True)
-        img_fname = f"img_{uuid.uuid4().hex}.png"
-        save_base64_image(
-            result["image_b64"],
-            os.path.join(STORAGE_PATH, img_fname),
-            max_size=IMAGE_STORE_MAX_SIZE,
+        image_url, _ = storage.store_story_image(
+            result["image_b64"], STORAGE_PATH, request.host_url.rstrip("/")
         )
-        image_url = request.host_url.rstrip("/") + f"/api/image/{img_fname}"
 
         if logger:
             logger.debug(f"Story image generated: {image_url}")
