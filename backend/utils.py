@@ -26,6 +26,14 @@ def save_base64_image(base64_string, save_path, max_size=None):
         # The image models only emit 1024px and up, which is far larger than the
         # story panel needs. Downscaling here cuts the bytes the client fetches.
         image.thumbnail((max_size, max_size), Image.LANCZOS)
+    # PIL picks the format from the extension, and JPEG has no alpha channel, so
+    # an RGBA source saved as .jpg raises "cannot write mode RGBA as JPEG". The
+    # caller chooses that extension, so flatten rather than let it through.
+    if os.path.splitext(save_path)[1].lower() in (".jpg", ".jpeg") and image.mode not in (
+        "RGB",
+        "L",
+    ):
+        image = image.convert("RGB")
     image.save(save_path, optimize=True)
 
 def logger_setup(name, location, debug=False):
