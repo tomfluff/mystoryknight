@@ -1,82 +1,104 @@
 # MyStoryKnight
 
-## Description
+A collaborative storytelling web app for children. A player draws or uploads a
+character, the backend turns that drawing into a character sheet and a few story
+premises using OpenAI models, and the story then advances one illustrated,
+narrated part at a time from choices the player makes. React + Vite frontend,
+Flask + gunicorn backend.
 
-## Running the application
+## Prerequisites
 
-### Prerequisites
+- An OpenAI API key.
+- Docker Desktop, or Python 3.10 and Node 18 to run the two services directly.
 
-- Docker Desktop
+## Setup and run
 
-### Steps
+Copy `backend/.env.example` to `backend/.env` and `frontend/.env.example` to
+`frontend/.env`, then fill them in. Both files must exist -- docker compose
+loads them by path.
 
-1. Clone the repository
-2. Inside `backend` and `frontend`, copy `.env.example` to `.env` and fill in the necessary environment variables.
-3. Run the following command in the root directory of the repository
+With Docker, from the repository root:
 
 ```bash
 docker-compose up
 ```
 
-1. Open a web browser and navigate to `http://localhost:3000`
-2. Access the backend API at `http://localhost:5000/api`
+Frontend on <http://localhost:3000>, API on <http://localhost:5000/api>.
+Compose overrides the backend image's gunicorn command with `python app.py` and
+bind-mounts both source trees, so edits hot-reload.
 
-## Structure
+Without Docker: `pip install -r requirements.txt && python app.py` in
+`backend/`, and `npm install && npm run dev` in `frontend/`.
 
-```
-MyStoryKnight/
-├── frontend                # Frontend code (React)
-|  ├── Dockerfile           # Dockerfile for frontend
-├── backend                 # Backend code (Flask)
-|  ├── Dockerfile           # Dockerfile for backend
-├── docker-compose.yml      # Docker compose file
-└── README.md               # This file
-```
+## Environment variables
 
-## Deployment
-
-### Backend (Cloud Run)
-
-From the `backend` directory:
-
-```bash
-gcloud run deploy mystoryknight-be --source .   --region us-central1   --allow-unauthenticated   --set-env-vars "CORS_ORIGINS=https://tomfluff.github.io,LOGGER=False,DEBUG=False,IMAGE_DELIVERY=inline"
-```
-
-Then set `OPENAI_API_KEY` in the Cloud Console (kept out of the command so it
-stays out of shell history).
-
-Environment variables:
+`backend/.env`:
 
 | Variable | Notes |
 | --- | --- |
-| `OPENAI_API_KEY` | Required. Without it the service still starts, but every LLM call returns 401. |
-| `OPENAI_ORG_ID` | Optional. Leave unset unless you have one; a wrong value 401s every request. |
-| `CORS_ORIGINS` | Comma-separated allowed origins. Browser-only protection: it does not stop scripted calls. |
-| `IMAGE_DELIVERY` | `inline` (default) returns images as WebP data URLs and stores nothing. `url` stores them. |
-| `GCS_BUCKET` | Only used when `IMAGE_DELIVERY=url`. Unset means the instance disk, which on Cloud Run is per-instance and RAM-backed. |
-| `DEBUG` | Must stay `False`. `True` exposes the Werkzeug debugger. |
-| `PORT` | Do **not** set. Reserved on Cloud Run, which injects it. |
+| `OPENAI_API_KEY` | Required. Missing it does not stop startup; every LLM call returns 401 instead. |
+| `OPENAI_ORG_ID` | Optional. Leave unset unless you have one -- a wrong value 401s every request. |
+| `CORS_ORIGINS` | Comma-separated allowed origins, default `http://localhost:3000`. Browser-only protection: it does not stop scripted calls. |
+| `DEBUG` | Default `False`. Never `True` on a deployed instance -- it exposes the Werkzeug debugger. |
+| `LOGGER` | Default `False`. `True` logs to `logs/app.log` inside the container, not stdout. |
+| `GCS_BUCKET` | Bucket for stored story images. Unused while image delivery is `inline` (see below). |
+| `PORT`, `HOST` | Local `python app.py` only. Do not set `PORT` on Cloud Run -- it is reserved and injected. |
 
-Notes:
+`frontend/.env`:
 
-- Check the active project first: `gcloud projects list`, `gcloud config get project`, `gcloud config set project PROJECT_ID`.
-- The container runs gunicorn, not the Flask development server.
-- `.env` is excluded from the image via `.dockerignore`. Do not remove that entry -- the Dockerfile does `COPY . .`, so without it your API key is baked into a pullable image layer.
+| Variable | Notes |
+| --- | --- |
+| `VITE_API_BASE_URL` | Backend API root, e.g. `http://localhost:5000/api`. Compiled into the bundle at build time, so changing it requires a rebuild. |
 
-### Frontend (GitHub Pages)
+Image delivery is a constant in `backend/config.py`, not an environment
+variable. `IMAGE_DELIVERY` defaults to `inline`: illustrations come back as
+WebP data URLs and nothing is stored server-side. Set it to `url` to persist
+them instead -- to `GCS_BUCKET` if that is set, to local `static/` otherwise.
 
-1. Put the Cloud Run URL in `frontend/.env`:
-   ```
-   VITE_API_BASE_URL=https://<service>-<hash>.us-central1.run.app/api
-   ```
-   This is compiled into the bundle at build time, so changing it later requires a rebuild.
-2. From `frontend`, run `npm run deploy` (npm runs the `predeploy` build automatically).
-3. Publishes to the `gh-pages` branch, served at `https://tomfluff.github.io/mystoryknight/`.
+## API
 
-GitHub Pages paths are case-sensitive: `base` in `vite.config.ts` must match the
-repository name exactly, and the router takes its `basename` from that value.
+Everything is under `/api`. `GET /api` returns a self-description, but that
+list is stale; the actual endpoints are:
 
-# Notes
+| Endpoint | Method | Purpose |
+| --- | --- | --- |
+| `/api/session` | GET | New session id |
+| `/api/character` | POST | Character sheet from a drawing |
+| `/api/story/premise` | POST | Candidate premises for a character |
+| `/api/story/init` | POST | Opening part and initial story state |
+| `/api/story/part` | POST | Next part; advances the client-carried state |
+| `/api/story/actions` | POST | Choices for the current part |
+| `/api/story/end` | POST | Closing part |
+| `/api/story/image` | POST | Illustration for a part |
+| `/api/image`, `/api/image/<name>` | POST, GET | Store and serve an image (`url` delivery only) |
+| `/api/translate` | GET | Translate text |
+| `/api/read` | GET | Streamed TTS audio |
 
-- Audio playback with more compatability [might be related to this post](https://anvil.works/forum/t/how-to-play-streaming-audio-as-it-arrives/18743/2).
+The story state is held by the client and sent with each request; the server
+advances it as a pure function (`backend/story_state.py`).
+
+## Deployment
+
+Backend on Cloud Run, from `backend/`:
+
+```bash
+gcloud run deploy mystoryknight-be --source . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars "CORS_ORIGINS=https://tomfluff.github.io"
+```
+
+Then set `OPENAI_API_KEY` in the Cloud Console, so it stays out of shell
+history. Check the target project first with `gcloud config get project`.
+
+`--source .` builds `backend/Dockerfile`, which runs gunicorn. `.dockerignore`
+excludes `.env` -- keep that entry, because the Dockerfile does `COPY . .` and
+would otherwise bake the API key into a pullable image layer.
+
+Frontend on GitHub Pages: set `VITE_API_BASE_URL` in `frontend/.env` to the
+Cloud Run URL (`https://<service>-<hash>.us-central1.run.app/api`), then run
+`npm run deploy` from `frontend/` -- npm runs the `predeploy` build itself. It
+publishes to the `gh-pages` branch, served at
+<https://tomfluff.github.io/mystoryknight/>. Pages paths are case-sensitive:
+`base` in `vite.config.ts` must match the repository name exactly, and the
+router takes its `basename` from that value.
