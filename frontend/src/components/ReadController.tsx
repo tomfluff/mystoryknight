@@ -65,7 +65,12 @@ const ReadController = ({ text, autoPlay }: Props) => {
         ref={audioRef}
         autoPlay={autoPlay}
         preload="none"
-        src={`${instance.defaults.baseURL}/read?os=${os}&text=${text}`}
+        // Encoded, not interpolated raw: story text carries `&`, `#` and `+`,
+        // each of which silently truncates or corrupts the query string, so the
+        // narration read back a fragment of the passage or none of it.
+        src={`${instance.defaults.baseURL}/read?os=${encodeURIComponent(
+          os
+        )}&text=${encodeURIComponent(text)}`}
         onEnded={close}
         onPlay={open}
         onPause={close}
