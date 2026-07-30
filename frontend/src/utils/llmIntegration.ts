@@ -1,6 +1,6 @@
 import { usePreferencesStore } from "../stores/preferencesStore";
 import { useAdventureStore } from "../stores/adventureStore";
-import { TStory, TStoryState } from "../types/Story";
+import { TBeatPhase, TStory, TStoryState } from "../types/Story";
 
 type TComplexity = {
   value: number;
@@ -46,6 +46,43 @@ export const getComplexityPrompt = (complexity: number) => {
   return complexityOptions.find((d) => d.value === complexity)?.prompt;
 };
 
+const JOURNEY_STAGES = [
+  "call_to_adventure",
+  "crossing_the_threshold",
+  "trials_and_friends",
+  "the_ordeal",
+  "the_reward",
+  "the_road_back",
+  "return_transformed",
+];
+
+const EARLY_STAGES = [
+  "call_to_adventure",
+  "crossing_the_threshold",
+  "trials_and_friends",
+];
+
+// Ports of compute_stage/compute_phase in backend/story_state.py. The fallback
+// has to carry a stage of its own: prompt_fields defaults a missing one to "",
+// STAGE_GUIDELINES misses, and that generation loses its hero's-journey
+// steering until the server recomputes the stage on the next turn.
+const computeStage = (index: number, target: number) => {
+  const t = Math.max(Math.trunc(target) || 1, 1);
+  const slot = Math.trunc(
+    ((Math.max(Math.trunc(index), 1) - 1) / t) * JOURNEY_STAGES.length
+  );
+  return JOURNEY_STAGES[Math.min(slot, JOURNEY_STAGES.length - 1)];
+};
+
+// Derived from the stage, exactly as the backend does it, so the two cannot
+// contradict each other.
+const computePhase = (index: number, target: number): TBeatPhase => {
+  const stage = computeStage(index, target);
+  if (EARLY_STAGES.includes(stage)) return "rising";
+  if (stage === "the_ordeal" || stage === "the_reward") return "climax";
+  return "resolution";
+};
+
 /*
  * Legacy sessions have parts but no storyState. Build a degenerate state from
  * the raw parts; it self-heals on the next /story/part call (the piggyback
@@ -55,8 +92,6 @@ const degenerateState = (story: TStory): TStoryState => {
   const texts = story.parts.map((p) => p.text);
   const index = texts.length;
   const target = Math.max(index + 4, 8); // legacy story gets >=4 more parts of runway
-  // Mirrors compute_phase in backend/story_state.py.
-  const r = (index + 1) / target;
   return {
     summary: texts.slice(0, -3).join(" "), // verbatim, not compacted -- one-time cost
     recentParts: texts.slice(-3).map((text) => ({ text, recap: text })),
@@ -65,7 +100,8 @@ const degenerateState = (story: TStory): TStoryState => {
     beat: {
       index,
       target,
-      phase: r < 0.7 ? "rising" : r < 1.0 ? "climax" : "resolution",
+      phase: computePhase(index, target),
+      stage: computeStage(index, target),
     },
   };
 };
