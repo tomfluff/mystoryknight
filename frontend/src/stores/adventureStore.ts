@@ -82,41 +82,54 @@ export const appendStory = (part: TStoryPart) => {
   });
 };
 
-export const updateActions = (actions: TAction[]) => {
+/*
+ * Every part update goes through here, addressed by id rather than by
+ * `parts[parts.length - 1]`. An illustration takes 12-30s, every StoryPart
+ * stays mounted, and nothing cancels the request when the child picks an
+ * action -- so a response routinely lands after the next part was appended,
+ * and the last element is no longer the part that asked for it.
+ *
+ * Rebuilds the part instead of assigning into it: the old version mutated
+ * objects that were already in the persisted state.
+ */
+const updatePart = (partId: string, fn: (part: TStoryPart) => TStoryPart) => {
   useAdventureStore.setState((state) => {
     if (!state.story) return state;
-    const parts = state.story.parts;
-    parts[parts.length - 1].actions = actions;
     return {
       story: {
         ...state.story,
-        parts,
+        parts: state.story.parts.map((p) => (p.id === partId ? fn(p) : p)),
       },
     };
   });
 };
 
-export const chooseAction = (action: TAction) => {
-  useAdventureStore.setState((state) => {
-    if (!state.story) return state;
-    const parts = state.story.parts;
-    parts[parts.length - 1].actions = parts[parts.length - 1].actions?.map(
-      (a) => {
-        a.active = false;
-        // Match on id, not title: two actions can share a title.
-        if (a.id === action.id) {
-          a.used = true;
-        }
-        return a;
-      }
-    );
-    return {
-      story: {
-        ...state.story,
-        parts,
-      },
-    };
-  });
+export const updateActions = (partId: string, actions: TAction[]) => {
+  updatePart(partId, (part) => ({ ...part, actions }));
+};
+
+export const chooseAction = (partId: string, action: TAction) => {
+  updatePart(partId, (part) => ({
+    ...part,
+    actions: part.actions?.map((a) => ({
+      ...a,
+      active: false,
+      // Match on id, not title: two actions can share a title.
+      used: a.id === action.id ? true : a.used,
+    })),
+  }));
+};
+
+/*
+ * Undo of chooseAction, for a continuation that failed. Without it the part
+ * keeps every action disabled, handleActionClick refuses to fire again, and
+ * because the store is persisted the dead end survives a reload.
+ */
+export const restoreActions = (partId: string) => {
+  updatePart(partId, (part) => ({
+    ...part,
+    actions: part.actions?.map((a) => ({ ...a, active: true, used: false })),
+  }));
 };
 
 export const getStoryText = () => {
@@ -131,19 +144,16 @@ export const canChooseAction = () => {
     ].actions?.every((a) => !a.used);
 };
 
-export const updateStoryImage = (image_url: string, seconds?: number) => {
-  useAdventureStore.setState((state) => {
-    if (!state.story) return state;
-    const parts = state.story.parts;
-    parts[parts.length - 1].image = image_url;
-    parts[parts.length - 1].imageSeconds = seconds;
-    return {
-      story: {
-        ...state.story,
-        parts,
-      },
-    };
-  });
+export const updateStoryImage = (
+  partId: string,
+  image_url: string,
+  seconds?: number
+) => {
+  updatePart(partId, (part) => ({
+    ...part,
+    image: image_url,
+    imageSeconds: seconds,
+  }));
 };
 
 export const setFinished = () => {
