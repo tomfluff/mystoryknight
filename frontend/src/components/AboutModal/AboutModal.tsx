@@ -43,8 +43,8 @@ const AboutModal = () => {
             a group, and is suitable for children and adults of all ages.
           </Text>
           <Text>
-            Use your imagination to draw a unique charater you want follow the
-            story with. Choose how the story unfolds at each stage and be the
+            Use your imagination to draw a unique character you want to follow
+            the story with. Choose how the story unfolds at each stage and be the
             great storyteller you are.
           </Text>
           <Divider />
@@ -55,6 +55,29 @@ const AboutModal = () => {
               <i>Freepik</i> from{" "}
               <Anchor href="https://www.flaticon.com/" target="_blank">
                 flaticon
+              </Anchor>
+              .
+            </Text>
+          </Box>
+          {/* The AGPL asks a network-served copy to offer its users the source,
+              so the link belongs in the app and not only in the README. */}
+          <Box>
+            <Text fz="md">License</Text>
+            <Text fz="sm">
+              Copyright &copy; 2026 Yotam Sechayk. MyStoryKnight is free
+              software, licensed under the{" "}
+              <Anchor
+                href="https://www.gnu.org/licenses/agpl-3.0.html"
+                target="_blank"
+              >
+                GNU AGPL, version 3 or later
+              </Anchor>
+              . It comes with no warranty. The source code is at{" "}
+              <Anchor
+                href="https://github.com/tomfluff/mystoryknight"
+                target="_blank"
+              >
+                github.com/tomfluff/mystoryknight
               </Anchor>
               .
             </Text>
