@@ -111,3 +111,18 @@ the bundle and readable by anyone in devtools, so hiding it would only hide it
 from you. Pages paths are case-sensitive: `base` in `vite.config.ts` must match
 the repository name exactly, and the router takes its `basename` from that
 value.
+
+## License
+
+Copyright (C) 2026 Yotam Sechayk.
+
+MyStoryKnight is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version. It is distributed without any warranty; see [LICENSE](LICENSE)
+for the full terms.
+
+The AGPL differs from the GPL in one way that matters here: if you run a
+modified version and let people use it over a network, section 13 obliges you to
+offer those users its source. That is why the About dialog links back to this
+repository -- keep an equivalent link in any fork you deploy.
