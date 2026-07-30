@@ -48,53 +48,60 @@ const InstructionView = () => {
             </Title>
             <Divider size="sm" w={rem(128)} />
           </Stack>
-          <Stack align="start" gap="sm">
+          <Stack align="stretch" gap="lg">
             <Box opacity={!session ? 1 : 0.5}>
-              <Text>
-                1. Start a{" "}
-                <Button
-                  m="xs"
-                  size="compact-md"
-                  onClick={() => newSession.mutate()}
-                  disabled={session != null}
-                >
-                  New Session
-                </Button>{" "}
-                to set up the system, and feel free to change the settings.
+              <Text mb="xs">
+                1. Start a new session to set up the system. You can change the
+                settings afterwards.
               </Text>
+              <Button
+                size="md"
+                onClick={() => newSession.mutate()}
+                loading={newSession.isPending}
+                disabled={session != null}
+              >
+                Start New Session
+              </Button>
+              {newSession.isPending && (
+                <Text size="sm" c="dimmed" mt="xs">
+                  Waking up the server. The first start can take up to a minute.
+                </Text>
+              )}
+              {newSession.isError && (
+                <Text size="sm" c="red" mt="xs">
+                  Could not reach the server. Check your connection and press
+                  the button again.
+                </Text>
+              )}
             </Box>
 
             <Box opacity={session != null && !character ? 1 : 0.5}>
-              <Text>
-                2. Upload and{" "}
-                <Button
-                  m="xs"
-                  size="compact-md"
-                  onClick={openCapture}
-                  disabled={session == null || character != null}
-                >
-                  Capture your Drawing
-                </Button>{" "}
-                of a character to be the hero of your story.
+              <Text mb="xs">
+                2. Upload a drawing of a character to be the hero of your story.
               </Text>
+              <Button
+                size="md"
+                onClick={openCapture}
+                disabled={session == null || character != null}
+              >
+                Capture your Drawing
+              </Button>
             </Box>
             <Box
               opacity={
                 session != null && character != null && !premise ? 1 : 0.5
               }
             >
-              <Text>
-                3. Select a{" "}
-                <Button
-                  m="xs"
-                  size="compact-md"
-                  onClick={openPremise}
-                  disabled={character == null || premise != null}
-                >
-                  Premise
-                </Button>{" "}
-                to set the stage for your story.
+              <Text mb="xs">
+                3. Select a premise to set the stage for your story.
               </Text>
+              <Button
+                size="md"
+                onClick={openPremise}
+                disabled={character == null || premise != null}
+              >
+                Select a Premise
+              </Button>
             </Box>
           </Stack>
         </Paper>
