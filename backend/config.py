@@ -28,6 +28,19 @@ IMAGE_GEN_QUALITY = "low"
 # story panel never displays it that large.
 IMAGE_STORE_MAX_SIZE = 512
 
+# How illustrations reach the client:
+#   "inline" -- a WebP data URL, nothing stored server-side. No bucket, no disk.
+#               The client holds the bytes and sends the previous one back for
+#               the reference chain.
+#   "url"    -- stored (GCS_BUCKET if set, else ./static) and served by URL.
+IMAGE_DELIVERY = "inline"
+
+# Only used by "inline". Smaller and WebP on purpose: the client keeps every
+# image in sessionStorage (~5MB cap), and 512px PNG data URLs are ~756KB each,
+# which blows the quota around part 7. WebP at 448px is ~15x smaller.
+IMAGE_INLINE_MAX_SIZE = 448
+IMAGE_INLINE_QUALITY = 80
+
 # Reasoning effort for GPT-5.6 calls: none | low | medium | high.
 # These prompts are short and consume ~0 reasoning tokens, so this is mostly
 # insurance against slow, expensive reasoning on longer inputs.

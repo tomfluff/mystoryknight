@@ -465,15 +465,19 @@ def storyimage_gen():
                 logger.error("No data found in the request!")
             return jsonify(type="error", message="No data found!", status=400)
 
-        # The client names the previous illustration; it is already stored, so
-        # fetch the bytes here instead of having the browser re-upload megabytes.
-        prev_name = data.get("previous_image")
-        if prev_name:
-            prev_bytes = storage.read_story_image(prev_name, STORAGE_PATH)
-            if prev_bytes:
-                data["previous_image"] = b64encode(prev_bytes).decode()
+        # `previous_image` arrives either as a data URL (inline mode: the client
+        # holds the bytes, since nothing is stored) or as a filename (url mode:
+        # we read it back so the browser does not re-upload megabytes).
+        prev = data.get("previous_image")
+        if prev:
+            if str(prev).startswith("data:"):
+                pass  # already base64; llm.py strips the data: header
             else:
-                data.pop("previous_image", None)
+                prev_bytes = storage.read_story_image(prev, STORAGE_PATH)
+                if prev_bytes:
+                    data["previous_image"] = b64encode(prev_bytes).decode()
+                else:
+                    data.pop("previous_image", None)
 
         t_start = time.time()
         result = llm.generate_story_image(data)

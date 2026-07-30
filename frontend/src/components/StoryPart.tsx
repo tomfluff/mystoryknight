@@ -111,8 +111,12 @@ const StoryPart = ({ part, isNew }: Props) => {
           "/story/image",
           {
             content: part.keymoment,
-            // Filename only -- the backend already has the file on disk.
-            previous_image: previousImage?.split("/").pop(),
+            // A data URL passes through whole (inline mode stores nothing, so
+            // the client is the only holder); a stored URL sends just the
+            // filename and the backend reads the bytes back.
+            previous_image: previousImage?.startsWith("data:")
+              ? previousImage
+              : previousImage?.split("/").pop(),
             // The passage the child just read: grounds the scene so the image
             // depicts this part, not a loose interpretation of one sentence.
             story_text: part.text,
