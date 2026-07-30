@@ -1,5 +1,10 @@
 import { create } from "zustand";
-import { createJSONStorage, devtools, persist } from "zustand/middleware";
+import {
+  StateStorage,
+  createJSONStorage,
+  devtools,
+  persist,
+} from "zustand/middleware";
 import { createSelectors } from "../utils/createSelectors";
 import { TImage } from "../types/Image";
 import { TCharacter } from "../types/Character";
@@ -18,12 +23,29 @@ const initialState = {
   finished: false,
 };
 
+/*
+ * Persisting is best-effort. The state carries inline WebP illustrations, and
+ * a story that outgrows the ~5MB sessionStorage quota must keep playing: an
+ * uncaught setItem would throw out of whichever setState triggered the write.
+ */
+const quotaSafeStorage: StateStorage = {
+  getItem: (name) => sessionStorage.getItem(name),
+  setItem: (name, value) => {
+    try {
+      sessionStorage.setItem(name, value);
+    } catch {
+      // Over quota: this write is dropped, the story continues in memory.
+    }
+  },
+  removeItem: (name) => sessionStorage.removeItem(name),
+};
+
 export const useAdventureStore = createSelectors(
   create<typeof initialState>()(
     devtools(
       persist(() => initialState, {
         name: "adventure",
-        storage: createJSONStorage(() => sessionStorage),
+        storage: createJSONStorage(() => quotaSafeStorage),
       }),
       {
         name: "Adventure",
@@ -130,18 +152,6 @@ export const restoreActions = (partId: string) => {
     ...part,
     actions: part.actions?.map((a) => ({ ...a, active: true, used: false })),
   }));
-};
-
-export const getStoryText = () => {
-  return useAdventureStore.getState().story?.parts.map((part) => part.text);
-};
-
-export const canChooseAction = () => {
-  return useAdventureStore
-    .getState()
-    .story?.parts[
-      useAdventureStore.getState().story!.parts.length - 1
-    ].actions?.every((a) => !a.used);
 };
 
 export const updateStoryImage = (
