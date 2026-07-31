@@ -10,7 +10,6 @@ import { useState } from "react";
 import { useMediaQuery } from "@mantine/hooks";
 import { useAdventureStore } from "../stores/adventureStore";
 import { useUiStrings } from "../i18n/strings";
-import paper from "./paperChrome.module.css";
 
 type Props = {
   display: boolean;
@@ -50,15 +49,6 @@ const ChatUploadModal = ({ display, handleChat, finalAction }: Props) => {
       title={t("chatWithTitle")}
       centered
       fullScreen={isMobile}
-      closeButtonProps={{ "aria-label": t("closeWindow") }}
-      classNames={{
-        overlay: paper.overlay,
-        content: `${paper.content} ${paper.sheetSky}`,
-        header: paper.header,
-        title: paper.title,
-        body: paper.body,
-        close: paper.close,
-      }}
     >
       <Container>
         <Stack>
@@ -72,16 +62,8 @@ const ChatUploadModal = ({ display, handleChat, finalAction }: Props) => {
             }
             disabled={characters.length === 0}
             allowDeselect={false}
-            classNames={{
-              wrapper: paper.fieldWrapper,
-              input: paper.fieldInput,
-              section: paper.fieldSection,
-              dropdown: paper.dropdown,
-              option: paper.option,
-            }}
           />
           <Textarea
-            size="md"
             value={message}
             onChange={(e) => setMessage(e.currentTarget.value)}
             placeholder={t("whatToSay")}
@@ -89,17 +71,12 @@ const ChatUploadModal = ({ display, handleChat, finalAction }: Props) => {
             minRows={2}
             maxRows={4}
             maxLength={280}
-            classNames={{
-              wrapper: paper.fieldWrapper,
-              input: paper.fieldTextarea,
-            }}
           />
           <Button
             onClick={handleSend}
             disabled={!character || !message.trim()}
             fullWidth
             h={44}
-            classNames={{ root: paper.btn }}
           >
             {t("sayIt")}
           </Button>

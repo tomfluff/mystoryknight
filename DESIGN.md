@@ -13,12 +13,7 @@ when a decision here has a WHY, do not undo it without addressing the WHY.
   (`frontend/src/hooks/useLanguageDirection.ts`) syncs `<html lang>` and text
   direction with the language preference on load and on every change.
 - Layout shell is Mantine `AppShell` (header 60px, footer 60px, navbar 320px,
-  navbar breakpoint `xs`) in `frontend/src/App.tsx`. The navbar holds only the
-  character/premise cards, so on desktop it stays collapsed until a character
-  exists (`collapsed: { desktop: !isCharacter && !opened }`) — otherwise an
-  empty 320px rail sits beside the entry view. The `!opened` term keeps the
-  xs–sm band working: there the burger is still visible but the navbar counts
-  as "desktop", so the burger must be able to open it.
+  navbar breakpoint `xs`) in `frontend/src/App.tsx`.
 - Component-specific styles live in CSS Modules next to the component
   (`ActionButton.module.css` etc.), not in global CSS. Global CSS is a
   body-margin reset only.
@@ -30,14 +25,14 @@ sanctioned hex is the sparkle block, see below):
 
 | Role | Colour | Where | Why |
 |---|---|---|---|
-| Primary | `violet` | Theme `primaryColor` (modals, header controls, links) | The app's identity colour in Mantine chrome; inside the paper world the violet lives in the mat ground token |
-| Destructive | `--poppy-deep` on `--cream-head` | Reset sticker (`App.tsx`) | Measures 6.23:1 (5.21:1 disabled). The earlier Mantine `orange.6` + `autoContrast` was the AA-safe answer while the shell was still Mantine; in the paper world the deep poppy carries the same destructive read in-world |
-| Inactive action | dimmed paper (`opacity` + flattened shadow + native `disabled`) | `ActionButton` when `!action.active && !action.used` | The taken action keeps its paper colour and gains a check sticker, so the story's history keeps its colour and the pick is marked by shape |
-| Error | `--poppy-deep` on `--fibre` (`.errorChip` in `paper.module.css`) | Inline failure text and retry affordances | Errors are always accompanied by text, never colour alone; the fibre chip keeps the red at 6.3:1 on any ground |
-| Brand flourish | — | — | There is no gradient in the app. The footer's violet→grape pill went when the footer became a paper scrap; do not reintroduce one |
+| Primary / story voice | `violet` | Theme `primaryColor`; story-part bubbles; action buttons | The app's identity colour; storyteller surfaces and story choices read as one voice |
+| Destructive | `orange.6` + `autoContrast` | Reset button (`App.tsx`) | `color="orange"` alone measured 3.58:1 at 14px and failed WCAG AA; `orange.6` with `autoContrast` keeps the destructive signal at AA contrast |
+| Inactive action | `gray` | `ActionButton` when `!action.active && !action.used` | Used-but-taken actions stay `violet` so the story's history keeps its colour |
+| Error | `red` (`c="red"`, `variant="light" color="red"`) | Inline failure text and retry buttons | Errors are always accompanied by text, never colour alone |
+| Brand flourish | gradient `violet → grape` | Footer author button | Decorative; only place a gradient is used |
 
 **Colour is never the sole signal.** The Ending affordance is deliberately NOT
-a colour change: the flap keeps its paper colour and gains sparkles instead, because
+a colour change: the button stays violet and gains sparkles instead, because
 yellow/orange reads as a warning and a colour-only change is invisible to
 colourblind users (`ActionButton.module.css` header comment). Apply the same
 rule to any new state signal: pair colour with a shape, icon, text, or motion
@@ -64,126 +59,25 @@ refactor away:
 names its scheme pair once, in CSS, never inline in JSX:
 
 - Use `light-dark()` with Mantine CSS variables in a CSS Module. Reference
-  implementation: the mat contact shadow in `paper.module.css`. (The previous
-  reference, the story bubble's violet pair in `StoryPart.module.css`, was
-  removed when the story view joined the paper-craft world: mats are
-  scheme-independent scenes, so the fibre scrap has no scheme pair to
-  declare.)
+  implementation: `StoryPart.module.css` — story-bubble background is
+  `light-dark(var(--mantine-color-violet-4), var(--mantine-color-violet-8))`,
+  text white in both schemes.
 - Theme-level component `defaultProps` / `vars` are also acceptable for
   Mantine-wide overrides.
 - Inline `colorScheme === "dark"` ternaries are banned; the last ones were
   removed from `StoryPart.tsx`. `useMantineColorScheme()` remains only where
   the *logic* needs the scheme (e.g. `ColorSchemeToggle`).
 
-## The paper-craft world (entry view, story view, navbar cards)
-
-The paper-craft world (approved mockup
-`.impeccable/variants/v1r-paper-craft.html`): torn construction-paper sheets
-on a deep-violet craft mat. It began entry-only; the once-open decision to
-extend it is now closed — the world deliberately spans the entry view
-(`InstructionView.*`), the story view (`StoryView.*`, `StoryPart.*`,
-`ActionButton.*`, `ReadController.tsx`) and the navbar hero/premise cards
-(`CharacterCard.*`, `PremiseCard.*` in the navbar). **The world is now the
-whole page**: the craft ground is the page background (`App.css`), the shell
-— header, footer, navbar — is paper (`App.module.css`), and every modal is a
-torn sheet on a dimmed craft ground (`paperChrome.module.css`). No Mantine
-chrome surface is left; Mantine still supplies behaviour, not appearance.
-The shared mechanics live in ONE place — `paper.module.css` (tokens,
-`.mat` scene + focus ring, `.paper` torn-sheet primitive, `.grain`,
-say-sticker grammar, error chip) plus `PaperFilters.tsx` (the `#msk-tear*`
-filters, mounted once in `App`); view modules only set colourway/tilt
-variables on top.
-
-- **Sanctioned hex token block, declared once.** Like the sparkle block, this
-  world is out-of-gamut for the Mantine palette on purpose. Its colours are
-  CSS custom properties (`--ground`, `--ink`, `--fibre`, `--poppy`,
-  `--marigold`, `--kingfisher`, `--sky`, `--grass`, `--violet`, ...) declared
-  once, at `:root` in `paper.module.css` — at `:root` rather than on `.mat`
-  because say stickers and error chips also render inside Mantine portals
-  (action popover, premise modal), which custom properties scoped to a mat
-  cannot reach. Reference the tokens; never mint fresh hex, and never use the
-  tokens to paint non-world surfaces (header/footer/modals chrome). Sanctioned
-  exceptions, all mockup-sourced one-offs: the deep-sea ink `#103245` on sky
-  paper (PremiseCard), the hero-card chip creams (`#ffe9c2`/`#fbf6ec`), the
-  check-sticker green `#2f8f3c`, and the translucent tape fills — tokenise any
-  of these the moment it recurs on a third surface.
-- **The mat is a scene, not a themed surface.** Saturated paper and the white
-  fibre tear cores only read against the deep-violet ground, so the mat keeps
-  the same colours in BOTH colour schemes — like a photograph would. Every
-  text/paper pairing inside it is therefore scheme-independent and AA in
-  both. The only `light-dark()` is where the mat meets the app shell: in the
-  light scheme the mat gets a contact shadow so it reads as an object lying
-  on the light page. This is a conscious carve-out from the Dark mode
-  convention, not a violation of it.
-- **Torn-paper primitive.** A sheet is `.paper`: `::before` is the white
-  fibre core, `::after` the coloured sheet, each displaced by its own
-  SVG-turbulence filter (`PaperFilters.tsx`, mounted once in `App`,
-  referenced as `url(#msk-tear*)`). Per-sheet variables (`--sheet`, `--tf1`, `--tf2`,
-  shadow vars) pick the colourway and tear seeds — vary the seeds between
-  neighbouring sheets so no two tears repeat. If an engine drops the
-  displacement filter (known Safari risk) the sheets fall back to straight
-  rounded edges: layout and contrast must stay filter-independent.
-- **Two-tone dashed focus ring (mat-scoped).** `.mat :focus-visible`
-  (`paper.module.css`) is a dark dashed outline (`3px dashed var(--ink)`)
-  over a white halo (`box-shadow: 0 0 0 4px var(--fibre)`): no single ring
-  colour is visible on every paper colour, but ink-on-fibre is. Scoped to
-  mats; everywhere else (including portalled popovers/modals) Mantine's
-  default rings stand.
-- **Display font policy.** `--font-display` is Titan One, `--font-body`
-  Nunito — round, friendly faces; the Latin subsets ship with the entry-view
-  chunk. They hold no Hebrew/Japanese glyphs, so the stacks list self-hosted
-  companions in the same register — Heebo (`he`), M PLUS Rounded 1c (`ja`).
-  Those are heavy (M PLUS's CJK unicode-range set alone is ~450KB of
-  `@font-face` CSS), so each loads as a lazy chunk only when its language is
-  active (`frontend/src/i18n/fonts.ts`, triggered from
-  `useLanguageDirection`). Every mat uses the world's faces (`--font-body`
-  on `.mat`; `--font-display` for names/titles/"The End"); Mantine chrome
-  outside the mats keeps the default type scale.
-- **Say sticker (TTS affordance).** Every line of world copy carries a say
-  control in the sticker grammar (`.say` in `paper.module.css`):
-  `SaySticker.tsx` is the single 44px play/pause sticker on entry copy;
-  `ReadController.tsx` is the story-side pair (play/pause + kingfisher
-  restart, plus auto-play for new parts) — both hit the same `/read`
-  endpoint, only the shell differs. Playing state is colour + glyph (green +
-  pause bars), never colour alone, and under reduced motion the pulse stops
-  but the swap remains.
-- **Hero gallery (the no-camera path).** `HeroGallery.tsx` offers six
-  ready-made drawings (`frontend/public/heroes/hero-1..6.webp`) that feed the
-  exact same `/character` pipeline as a webcam capture: the picked WebP is
-  re-encoded to the same JPEG-data-URL payload `DrawingUploadModal` sends.
-  One pipeline, two entrances — do not fork the character contract for new
-  entry paths.
-- **Motion.** The tape peel on the current sheet is the one authored motion
-  of the view; everything else settles. Under `prefers-reduced-motion` all
-  animation/transition on `.mat` surfaces (`paper.module.css`) is dropped
-  wholesale, but every state
-  signal keeps a static form (tape presence, check sticker, lock chip, the
-  green pause swap) — same rule as the sparkles.
-
-## Brand mark
-
-- The mark is the generated logo — a knight's helmet reading a violet book —
-  at `frontend/public/logo.png`; `favicon.ico` and `apple-touch-icon.png` are
-  derived from it. Keep the favicon derived from the mark; do not let them
-  drift apart.
-- In the entry masthead the mark sits in a **swappable logo slot**:
-  `.logoArt` is one fixed 46px box (38px below 40em) and the art is
-  `object-fit: contain` (the mark is portrait, 579x835 — never stretch it).
-  Trying a new mark is a one-line `<img>` swap inside the slot; nothing else
-  moves.
-
 ## Typography and headings
 
-- The paper world's display/body faces carry the whole app now — shell,
-  views and modals alike (see "The paper-craft world"). Titan One has no
-  italic, so the footer wordmark is the display face upright; do not
-  faux-italicise a display face.
+- Default Mantine type scale; no custom fonts. Footer wordmark uses
+  `ff="heading"` italic.
 - Button labels use `tt="none"`, not `capitalize`: action titles are
   sentence-style instructions, and Title Casing produced "Follow The Red
   Smudge" (`ActionButton.tsx`).
-- **Exactly one `h1` per view.** Entry view: a plain `h1` styled by
-  `classes.title` ("Let's make a story together.", `InstructionView.tsx`).
-  Story view: `VisuallyHidden component="h1"` ("Your story").
+- **Exactly one `h1` per view.** Entry view: `Title order={1} size="h3"`
+  ("Your Adventure Awaits", `InstructionView.tsx` — visual size decoupled from
+  semantic level). Story view: `VisuallyHidden component="h1"` ("Your story").
 - **One visually-hidden `h2` per story part** (`VisuallyHidden component="h2"`
   in `StoryView.tsx`), so a screen-reader user can jump between story parts.
   The app's co-play model depends on reading aloud, so structural navigation
@@ -254,9 +148,7 @@ variables on top.
 - Every icon-only control carries an `aria-label` (see `ColorSchemeToggle`,
   `AboutModal`, `PreferenceModal`). No exceptions.
 - Focus: rely on Mantine's default `focus-auto` visible focus rings; do not
-  suppress outlines. (The entry view substitutes its own two-tone dashed ring
-  — see the paper-craft section. The rule is "always a visible ring", not
-  "always Mantine's ring".)
+  suppress outlines.
 - Colour never the sole signal; 44px touch targets; reduced-motion fallback —
   see the sections above.
 
@@ -272,9 +164,6 @@ variables on top.
 - UI chrome strings are currently static English; they are being moved to
   `frontend/src/i18n/`. New UI strings should go there rather than being
   hard-coded in components.
-- Entry-view copy lives as keys in `frontend/src/i18n/strings.ts` (all four
-  languages); the per-language display fonts it renders in lazy-load via
-  `frontend/src/i18n/fonts.ts` (see the paper-craft section).
 
 ## Persistence constraint on imagery
 

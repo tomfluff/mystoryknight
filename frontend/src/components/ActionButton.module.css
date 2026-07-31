@@ -1,26 +1,11 @@
 /*
- * Choice flaps in the paper-craft world (spec: the mockup's continuation
- * region, .impeccable/variants/v1r-paper-craft.html) plus the sparkles
- * marking the Ending action once the story reaches a natural stopping point.
- *
- * The sparkle block is preserved unchanged from the pre-paper design. It is
- * deliberately NOT a colour change: the flap keeps its paper colour, because
- * yellow/orange reads as a warning and colour alone is invisible to
- * colourblind users. The sparkle is a suggestion, not a call to action -- it
- * brightens for a few seconds when it appears, then settles to a quiet
- * twinkle so it does not compete with the story text a child is reading. The
- * -12px/-5px inset reasoning below still holds against the flap: the torn
- * fibre core extends ~6px past the content box, so the stars ride the torn
- * edge like stickers on the paper without landing on the neighbouring flap.
+ * Sparkles marking the Ending action once the story reaches a natural stopping
+ * point. Deliberately NOT a colour change: the button stays violet, because
+ * yellow/orange reads as a warning and colour alone is invisible to colourblind
+ * users. The sparkle is a suggestion, not a call to action -- it brightens for a
+ * few seconds when it appears, then settles to a quiet twinkle so it does not
+ * compete with the story text a child is reading.
  */
-
-/* flap + its "more" sticker; also the sparkle anchor */
-.unit {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-}
 
 .wrapper {
   position: relative;
@@ -132,124 +117,4 @@
     opacity: 1;
     transform: scale(1);
   }
-}
-
-/* ============ torn-paper choice flap ============
-   State grammar (never colour-only, DESIGN.md):
-   - active:   full-colour flap + onward arrow, hover lift
-   - used:     keeps its paper colour (the story's history keeps its colour)
-     and swaps the arrow for a green check sticker -- shape marks "the one
-     you picked"
-   - inactive + unused: natively disabled, dimmed, flattened shadow, no lift
-
-   Tilt budget (paper.module.css): a flap is a sheet of paper in the layout,
-   not something taped on, so it sits square. What keeps neighbouring flaps
-   from twinning is the alternate colourway and its own tear seeds. */
-.flap {
-  composes: paper from "./paper.module.css";
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2);
-  min-height: 44px; /* 44px touch target (DESIGN.md, Interaction) */
-  padding: var(--sp-2) var(--sp-4);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-weight: 800;
-  font-size: 0.98rem;
-  line-height: 1.3;
-  color: var(--ink);
-  text-align: start;
-  /* Not "capitalize": titles are sentence-style instructions, and Title
-     Casing them gives "Follow The Red Smudge". */
-  text-transform: none;
-  --sheet: var(--marigold);
-  --tf1: url(#msk-tearB);
-  --tf2: url(#msk-tearD);
-  --shy: 6px;
-  --shb: 13px;
-  --sha: 0.36;
-  transition: transform 0.18s var(--ease-out);
-}
-/* Alternate colourway so neighbouring flaps differ -- assigned by list
-   position, never by meaning (the Ending signal is the sparkles, not a
-   colour). Vary the tear seeds too so no two tears repeat. */
-.flapAlt {
-  --sheet: var(--sky);
-  --tf1: url(#msk-tearD);
-  --tf2: url(#msk-tearE);
-}
-.flap:hover:not(:disabled),
-.flap:focus-visible {
-  transform: translateY(-3px);
-  z-index: 3;
-}
-.flap:active:not(:disabled) {
-  transform: translateY(1px);
-}
-.flap:disabled {
-  cursor: default;
-  opacity: 0.55;
-  --sha: 0.18;
-}
-.flapLabel {
-  min-width: 0;
-}
-.flapArrow {
-  flex: none;
-  display: inline-grid;
-  place-items: center;
-}
-.flapArrow svg {
-  width: 22px;
-  height: 22px;
-}
-/* The arrow points "onward" in reading direction; directional doodles must
-   mirror under RTL (DESIGN.md, RTL and language direction). */
-[dir="rtl"] .flapArrow svg {
-  transform: scaleX(-1);
-}
-/* Check sticker on the taken choice. */
-.flapCheck {
-  flex: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: inline-grid;
-  place-items: center;
-  background: #2f8f3c;
-  border: 2.5px solid #fff;
-  box-shadow: 0 2px 5px rgba(14, 7, 28, 0.3);
-}
-.flapCheck svg {
-  width: 15px;
-  height: 15px;
-}
-
-/* "more about this choice" -- a round fibre sticker beside the flap. */
-.moreBtn {
-  flex: none;
-  width: 44px; /* 44px touch target */
-  height: 44px;
-  padding: 0;
-  border-radius: 50%;
-  display: inline-grid;
-  place-items: center;
-  background: var(--fibre);
-  color: var(--ink);
-  border: 3px solid #fff;
-  cursor: pointer;
-  box-shadow: 0 3px 8px rgba(14, 7, 28, 0.35);
-  transition: transform 0.18s var(--ease-out);
-}
-.moreBtn svg {
-  width: 20px;
-  height: 20px;
-}
-.moreBtn:hover {
-  transform: translateY(-2px);
-}
-.moreBtn:active {
-  transform: translateY(1px);
 }

@@ -1,103 +1,17 @@
 /*
- * Story-part surfaces in the paper-craft world (spec: the mockup's
- * continuation region, .impeccable/variants/v1r-paper-craft.html "Then your
- * story looks like this").
- *
- * The old violet light-dark() bubble token that lived here is gone on
- * purpose: the story now sits on the craft mat, and a mat is a *scene*, not a
- * themed surface (DESIGN.md, "Dark mode" carve-out) — the fibre scrap keeps
- * the same fibre/ink pairing in BOTH colour schemes, so there is no scheme
- * pair left to declare. The Dark-mode convention still applies outside mats.
- *
- * Tilt budget (paper.module.css): the taped snapshot is the only thing here
- * that rotates — it is a photo taped to the page. The scrap, the part chip,
- * the avatar sticker and the end scrap all sit square, so a column of story
- * parts reads as a stack rather than a scatter. Spacing comes from the shared
- * --sp-* scale.
+ * Story bubble surface. The scheme pair lives here as a token (DESIGN.md,
+ * "Dark mode"): violet.4 in light, violet.8 in dark, white text in both --
+ * components must not re-decide this with inline colorScheme branches.
  */
-
-/* Fibre story scrap: ink text + the part's say controls on torn paper. */
-.scrap {
-  composes: paper from "./paper.module.css";
-  --sheet: var(--fibre);
-  --tf1: url(#msk-tearC);
-  --tf2: url(#msk-tearA);
-  --shy: 10px;
-  --shb: 22px;
-  --sha: 0.44;
-  color: var(--ink);
-  padding: var(--sp-4);
-  /* Head-room for the part chip's overhang (plus the fibre tear). */
-  margin-block-start: var(--sp-4);
-}
-.scrapText {
-  font-size: 1.05rem;
-  font-weight: 600;
-}
-
-/* "Part N" paper chip pinned to the scrap's top corner, on the world's shared
-   chip offsets. aria-hidden: the visually-hidden per-part h2 in StoryView
-   carries the same text for screen readers. */
-.partChip {
-  position: absolute;
-  inset-block-start: calc(var(--chip-overhang) * -1);
-  inset-inline-start: var(--chip-inset);
-  z-index: 2;
-  background: var(--kingfisher);
-  color: #fff;
-  font-weight: 800;
-  font-size: 0.82rem;
-  padding: var(--sp-1) var(--sp-3);
-  border-radius: 10px;
-  border: 2.5px solid var(--cream-head);
-  box-shadow: 0 3px 8px rgba(14, 7, 28, 0.4);
-  white-space: nowrap;
-}
-
-/* Avatars read as little square stickers on the mat. */
-.avatarSticker {
-  background: #fff;
-  border: 3px solid #fff;
-  box-shadow: 0 3px 7px rgba(14, 7, 28, 0.3);
-}
-
-/* Illustration as a taped snapshot: white photo frame, slight tilt, a strip
-   of masking tape across the top. This is the view's sanctioned tilt — a
-   photo physically taped down. The tape is centred with logical-safe auto
-   margins so it stays centred under RTL. */
-.snap {
-  background: #fff;
-  border: 5px solid #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(14, 7, 28, 0.3);
-  transform: rotate(1.8deg);
-}
-.snap::before {
-  content: "";
-  position: absolute;
-  inset-block-start: -10px;
-  inset-inline: 0;
-  margin-inline: auto;
-  width: 64px;
-  height: 16px;
-  z-index: 2;
-  background: rgba(255, 248, 235, 0.65);
-  clip-path: polygon(4% 0, 96% 6%, 100% 30%, 96% 60%, 100% 100%, 4% 94%, 0 62%, 4% 32%);
-  transform: rotate(-3deg);
-}
-
-/* "The story has ended" scrap: a fibre paper piece with the display voice. */
-.endScrap {
-  composes: paper from "./paper.module.css";
-  --sheet: var(--fibre);
-  --tf1: url(#msk-tearE);
-  --tf2: url(#msk-tearC);
-  --shy: 8px;
-  --shb: 18px;
-  --sha: 0.4;
-  color: var(--poppy-deep);
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 1.2rem;
-  padding: var(--sp-3) var(--sp-4);
+/*
+ * Doubled class: Paper's own background rule has the same (0,1,0) specificity
+ * and later source order, so a bare .bubble loses in the light scheme
+ * (white-on-white text). .bubble.bubble outranks it in both schemes.
+ */
+.bubble.bubble {
+  background-color: light-dark(
+    var(--mantine-color-violet-4),
+    var(--mantine-color-violet-8)
+  );
+  color: var(--mantine-color-white);
 }

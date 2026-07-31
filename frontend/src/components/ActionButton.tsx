@@ -1,5 +1,6 @@
-import { Text, Popover, Stack, Loader } from "@mantine/core";
+import { Text, Button, Group, Popover, Stack, Loader } from "@mantine/core";
 import { TAction } from "../types/Story";
+import { FaEllipsisVertical } from "react-icons/fa6";
 import ReadController from "./ReadController";
 import useTranslation from "../hooks/useTranslation";
 import { useUiStrings } from "../i18n/strings";
@@ -11,13 +12,9 @@ type Props = {
   // Sparkle this action (used for Ending once the story reaches resolution).
   // Suggestion only -- the child always decides.
   emphasis?: boolean;
-  // Alternate paper colourway. Assigned by list position in StoryPart, purely
-  // decorative variety -- never a meaning signal (DESIGN.md: the Ending
-  // affordance is the sparkles, not a colour).
-  alt?: boolean;
 };
 
-const ActionButton = ({ action, handleClick, emphasis, alt }: Props) => {
+const ActionButton = ({ action, handleClick, emphasis }: Props) => {
   const t = useUiStrings();
   const { data: shorttext, isLoading: shorttextLoading } = useTranslation(
     action.title
@@ -27,7 +24,7 @@ const ActionButton = ({ action, handleClick, emphasis, alt }: Props) => {
   );
 
   return (
-    <div className={`${classes.unit} ${emphasis ? classes.wrapper : ""}`}>
+    <Group wrap="nowrap" gap={0} className={emphasis ? classes.wrapper : undefined}>
       {emphasis && (
         <span className={classes.stars} aria-hidden="true">
           <span className={classes.star}>✦</span>
@@ -38,66 +35,53 @@ const ActionButton = ({ action, handleClick, emphasis, alt }: Props) => {
           <span className={classes.star}>✧</span>
         </span>
       )}
-      <button
-        type="button"
-        className={`${classes.flap} ${alt ? classes.flapAlt : ""}`}
+      <Button
+        size="sm"
+        /* 44px touch target (DESIGN.md, Interaction) -- this is the primary
+           child-facing control. */
+        h={44}
+        /* Logical corners: the flattened edge joins the popover button and
+           must mirror under RTL. */
+        style={{
+          borderStartEndRadius: 0,
+          borderEndEndRadius: 0,
+        }}
+        color={!action.active ? (action.used ? "violet" : "gray") : "violet"}
         onClick={handleClick}
         disabled={!action.active && !action.used}
+        /* Not "capitalize": titles are now sentence-style instructions, and
+           Title Casing them gives "Follow The Red Smudge". */
+        tt="none"
       >
-        <span className={classes.flapLabel}>
-          {shorttextLoading && (
-            <Loader color="var(--ink)" size="sm" type="dots" p={0} m={0} />
-          )}
-          {shorttext && shorttext}
-        </span>
-        {action.used ? (
-          /* The taken choice: shape marks it, not colour alone. */
-          <span className={classes.flapCheck} aria-hidden="true">
-            <svg viewBox="0 0 24 24" focusable="false">
-              <path
-                d="M4.5 12.5l5 5 10-11"
-                fill="none"
-                stroke="#fff"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-        ) : (
-          <span className={classes.flapArrow} aria-hidden="true">
-            <svg viewBox="0 0 24 24" focusable="false">
-              <path
-                d="M3 12h15M13 6l6 6-6 6"
-                stroke="currentColor"
-                strokeWidth="2.6"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
+        {shorttextLoading && (
+          <Loader color="white" size="sm" type="dots" p={0} m={0} />
         )}
-      </button>
+        {shorttext && shorttext}
+      </Button>
       <Popover width={300} position="top" withinPortal withArrow>
         <Popover.Target>
-          <button
-            type="button"
-            className={classes.moreBtn}
+          <Button
+            size="sm"
+            px="xs"
+            h={44}
+            miw={44}
+            color={
+              !action.active ? (action.used ? "violet" : "gray") : "violet"
+            }
+            style={{
+              borderStartStartRadius: 0,
+              borderEndStartRadius: 0,
+            }}
             aria-label={t("moreAboutChoice")}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <circle cx="12" cy="5" r="2.2" fill="currentColor" />
-              <circle cx="12" cy="12" r="2.2" fill="currentColor" />
-              <circle cx="12" cy="19" r="2.2" fill="currentColor" />
-            </svg>
-          </button>
+            <FaEllipsisVertical />
+          </Button>
         </Popover.Target>
         <Popover.Dropdown>
           <Stack gap="xs">
             <Text>
               {longtextLoading && (
-                <Loader size="sm" type="dots" p={0} m={0} />
+                <Loader color="white" size="sm" type="dots" p={0} m={0} />
               )}
               {longtext && longtext}
             </Text>
@@ -105,7 +89,7 @@ const ActionButton = ({ action, handleClick, emphasis, alt }: Props) => {
           </Stack>
         </Popover.Dropdown>
       </Popover>
-    </div>
+    </Group>
   );
 };
 
