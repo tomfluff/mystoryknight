@@ -28,71 +28,6 @@ type TStepState = "current" | "locked" | "done";
 const STAR =
   "M12 2l2.9 6 6.6.9-4.8 4.5 1.2 6.5L12 16.8 6.1 19.9l1.2-6.5L2.5 8.9 9.1 8z";
 
-/* Torn-edge filters: turbulence-displaced rectangles read as hand-torn paper.
-   Referenced from InstructionView.module.css via url(#msk-tear*). */
-const TearFilters = () => (
-  <svg
-    width="0"
-    height="0"
-    style={{ position: "absolute" }}
-    aria-hidden="true"
-    focusable="false"
-  >
-    <defs>
-      <filter id="msk-tearA" x="-15%" y="-15%" width="130%" height="130%">
-        <feTurbulence
-          type="fractalNoise"
-          baseFrequency="0.028 0.052"
-          numOctaves="4"
-          seed="3"
-          result="n"
-        />
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="11" />
-      </filter>
-      <filter id="msk-tearB" x="-15%" y="-15%" width="130%" height="130%">
-        <feTurbulence
-          type="fractalNoise"
-          baseFrequency="0.031 0.047"
-          numOctaves="4"
-          seed="11"
-          result="n"
-        />
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="13" />
-      </filter>
-      <filter id="msk-tearC" x="-15%" y="-15%" width="130%" height="130%">
-        <feTurbulence
-          type="fractalNoise"
-          baseFrequency="0.042 0.06"
-          numOctaves="3"
-          seed="19"
-          result="n"
-        />
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="9" />
-      </filter>
-      <filter id="msk-tearD" x="-15%" y="-15%" width="130%" height="130%">
-        <feTurbulence
-          type="fractalNoise"
-          baseFrequency="0.05 0.07"
-          numOctaves="3"
-          seed="27"
-          result="n"
-        />
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="7" />
-      </filter>
-      <filter id="msk-tearE" x="-15%" y="-15%" width="130%" height="130%">
-        <feTurbulence
-          type="fractalNoise"
-          baseFrequency="0.036 0.055"
-          numOctaves="4"
-          seed="35"
-          result="n"
-        />
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="10" />
-      </filter>
-    </defs>
-  </svg>
-);
-
 const StarDecor = ({ className }: { className: string }) => (
   <span className={`${classes.decor} ${className}`} aria-hidden="true">
     <svg viewBox="0 0 24 24" focusable="false">
@@ -191,8 +126,9 @@ const InstructionView = () => {
 
   return (
     <>
+      {/* The #msk-tear* filters this view references are mounted once by
+          PaperFilters in App. */}
       <div className={classes.entry}>
-        <TearFilters />
         <div className={classes.grain} aria-hidden="true" />
 
         <div className={classes.masthead}>

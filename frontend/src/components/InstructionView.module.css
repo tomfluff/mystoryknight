@@ -3,105 +3,26 @@
  * .impeccable/variants/v1r-paper-craft.html). Construction-paper step sheets
  * with SVG-turbulence torn edges on a deep-violet craft mat.
  *
- * Colour scheme decision (conscious, per DESIGN.md "Dark mode"): the craft mat
- * is a *scene*, not a themed surface — saturated paper and white fibre tear
- * cores only read against the deep-violet ground, so the mat keeps the same
- * colours in BOTH schemes (like a photograph would). Every text/paper pairing
- * inside the mat is therefore scheme-independent and AA in both. The only
- * light-dark() is where the mat meets the app shell: in the light scheme the
- * mat gets a contact shadow so it reads as an object lying on the light page.
- *
- * Palette hex is sanctioned here (like the sparkle block in
- * ActionButton.module.css): this world is out-of-gamut for the Mantine
- * palette on purpose. Tokens are declared once, on .entry, and only there.
+ * The world's shared primitives (token block, .mat scene + focus ring, .paper
+ * torn-sheet, .grain, say-sticker grammar, error chip) were extracted to
+ * paper.module.css when the world was extended to the story view. The local
+ * classes below (.entry, .paper, .grain, .sayline, .errorNote) are composes
+ * bridges: they keep this view's markup and descendant selectors untouched
+ * while sourcing the mechanics from the one shared module. Everything else in
+ * this file is entry-specific dressing (sheets, tape, steps, gallery, teaser).
  */
 
 .entry {
-  --ground: #281a46; /* deep violet craft mat */
-  --ink: #241507; /* warm crayon ink */
-  --fibre: #fff7ea; /* torn-paper fibre core */
-  --poppy: #d93611;
-  --poppy-deep: #b02800; /* error text on fibre (7:1) */
-  --marigold: #ffb020;
-  --kingfisher: #1173c2;
-  --sky: #35a7e8;
-  --grass: #3fa34d;
-  --violet: #7b4fd0;
-  --cream-head: #fff6e9; /* headings on the mat */
-  --lav-body: #d9ccf2; /* body copy on the mat */
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  /* Latin faces first (they carry the voice but hold no he/ja glyphs), then
-     the self-hosted non-Latin fallbacks: Heebo for Hebrew, M PLUS Rounded 1c
-     for Japanese — round, friendly faces in the same register. */
-  --font-display: "Titan One", "Nunito", "Heebo", "M PLUS Rounded 1c",
-    -apple-system, "Segoe UI", sans-serif;
-  --font-body: "Nunito", "Heebo", "M PLUS Rounded 1c", -apple-system,
-    "Segoe UI", sans-serif;
-
-  position: relative;
-  overflow: hidden;
-  border-radius: 18px;
-  background: var(--ground);
-  background-image: radial-gradient(120% 90% at 50% 0%, #33235b 0%, var(--ground) 62%);
-  color: var(--fibre);
-  font-family: var(--font-body);
-  line-height: 1.55;
+  composes: mat from "./paper.module.css";
   padding-block: 0 3.5rem;
-  /* Mat-on-page contact shadow: visible in light scheme, near-none in dark. */
-  box-shadow: light-dark(
-    0 14px 34px rgba(31, 17, 63, 0.35),
-    0 14px 34px rgba(0, 0, 0, 0.25)
-  );
 }
 
-/* two-tone focus ring: white halo + dark dashes — visible on any paper */
-.entry :focus-visible {
-  outline: 3px dashed var(--ink);
-  outline-offset: 4px;
-  box-shadow: 0 0 0 4px var(--fibre) !important;
-  border-radius: 10px;
-}
-
-/* ============ paper grain overlay ============ */
-.grain {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  pointer-events: none;
-  opacity: 0.055;
-  mix-blend-mode: soft-light;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* ============ torn paper primitive ============
-   ::before = white fibre core (slightly larger, own tear seed)
-   ::after  = the coloured sheet (its own tear seed)
-   real content sits above both. If an engine drops the displacement filter
-   (the mockup's noted Safari risk) the sheets fall back to straight rounded
-   edges — layout and contrast are filter-independent. */
+/* bridges to the shared primitives (see header) */
 .paper {
-  position: relative;
-  z-index: 0;
+  composes: paper from "./paper.module.css";
 }
-.paper::before {
-  content: "";
-  position: absolute;
-  inset: -6px;
-  z-index: -2;
-  background: var(--fibre);
-  border-radius: 14px;
-  filter: var(--tf1, url(#msk-tearA));
-  box-shadow: 0 var(--shy, 10px) var(--shb, 24px) rgba(14, 7, 28, var(--sha, 0.42));
-  transition: box-shadow 0.45s var(--ease-out);
-}
-.paper::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--sheet, var(--marigold));
-  border-radius: 11px;
-  filter: var(--tf2, url(#msk-tearB));
+.grain {
+  composes: grain from "./paper.module.css";
 }
 
 /* ============ masthead + logo lockup ============ */
@@ -238,63 +159,11 @@
   text-align: start;
 }
 
-/* ============ read-aloud sticker (TTS play button) ============ */
-.say {
-  flex: none;
-  width: 44px; /* 44px touch target (DESIGN.md, Interaction) */
-  height: 44px;
-  border-radius: 50%;
-  display: inline-grid;
-  place-items: center;
-  padding: 0;
-  background: var(--poppy);
-  color: #fff;
-  border: 3px solid var(--cream-head);
-  cursor: pointer;
-  transform: rotate(-4deg);
-  box-shadow: 0 4px 9px rgba(14, 7, 28, 0.35);
-  transition: transform 0.18s var(--ease-out), background-color 0.25s var(--ease-out);
-}
-.say svg {
-  width: 22px;
-  height: 22px;
-}
-.say:hover {
-  transform: rotate(0deg) translateY(-2px);
-}
-.say:active {
-  transform: translateY(1px);
-}
-/* Playing: colour + pause glyph (swapped in SaySticker.tsx) + pulse; colour
-   is never the sole signal, and under reduced motion the glyph + colour still
-   signal the state (motion removed, information kept). */
-.saying {
-  background: var(--grass);
-  animation: sayPulse 0.9s var(--ease-out) 2;
-}
-@keyframes sayPulse {
-  0% {
-    transform: rotate(-4deg) scale(1);
-  }
-  35% {
-    transform: rotate(-4deg) scale(1.16);
-  }
-  70% {
-    transform: rotate(-4deg) scale(0.98);
-  }
-  100% {
-    transform: rotate(-4deg) scale(1);
-  }
-}
+/* read-aloud sticker styles live in paper.module.css (shared with the story
+   view); .sayline is bridged so the .body .sayline > p rule below keeps
+   matching. */
 .sayline {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.8rem;
-}
-.sayline > p {
-  flex: 1;
-  min-width: 0;
-  margin: 0;
+  composes: sayline from "./paper.module.css";
 }
 
 /* ============ the step stack ============ */
@@ -521,17 +390,11 @@
   margin: 0.8rem 0 0;
   color: var(--subink, #5c3a00);
 }
-/* Error chip: fibre ground so the red stays AA on any sheet colour. */
+/* Error chip: fibre ground so the red stays AA on any sheet colour (shared
+   recipe — the story view uses the same .errorChip). */
 .errorNote {
-  display: inline-block;
+  composes: errorChip from "./paper.module.css";
   margin: 0.8rem 0 0;
-  background: var(--fibre);
-  color: var(--poppy-deep);
-  font-weight: 800;
-  font-size: 0.92rem;
-  padding: 0.45rem 0.8rem;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(14, 7, 28, 0.3);
 }
 
 /* per-sheet colourways */
@@ -989,16 +852,12 @@
   }
 }
 
-/* ============ reduced motion: keep signals, drop motion ============
-   Tape, checks, lock chips and the green "saying" swap all remain as static
-   signals (DESIGN.md: reduce the motion, not the information). */
+/* ============ reduced motion ============
+   The wholesale animation/transition kill lives in paper.module.css (.mat *);
+   only the entry-specific decor reset remains here. Tape, checks, lock chips
+   and the green "saying" swap all remain as static signals (DESIGN.md:
+   reduce the motion, not the information). */
 @media (prefers-reduced-motion: reduce) {
-  .entry *,
-  .entry *::before,
-  .entry *::after {
-    animation: none !important;
-    transition: none !important;
-  }
   .decor {
     translate: none;
   }

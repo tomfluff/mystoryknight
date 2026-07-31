@@ -4,14 +4,11 @@ import {
   Badge,
   Box,
   Flex,
-  Paper,
   Avatar,
   Group,
   Stack,
   Loader,
   Skeleton,
-  Button,
-  Text,
 } from "@mantine/core";
 import { useMediaQuery, useScrollIntoView } from "@mantine/hooks";
 import ReadController from "./ReadController";
@@ -37,10 +34,18 @@ import { useSessionStore } from "../stores/sessionStore";
 import { useDisclosure } from "@mantine/hooks";
 import ChatUploadModal from "./ChatUploadModal";
 import classes from "./StoryPart.module.css";
+import paperClasses from "./paper.module.css";
 
 type Props = {
   part: TStoryPart;
   isNew: boolean;
+  // 1-based position of this part in the story; drives the "Part N" chip and
+  // stays stable for the part's lifetime (memo-friendly).
+  partIndex: number;
+  // Planned total parts (storyState.beat.target). Optional: legacy sessions
+  // rehydrate without a storyState, and an ending can land past the plan —
+  // in both cases the chip drops the "of M".
+  partTotal?: number;
 };
 
 /* Typed on purpose: these payloads were `any`, which let a TAction object be
@@ -63,7 +68,7 @@ const actionKind = (action: TAction): TActionKind => {
   return "choice";
 };
 
-const StoryPart = ({ part, isNew }: Props) => {
+const StoryPart = ({ part, isNew, partIndex, partTotal }: Props) => {
   const t = useUiStrings();
   const instance = getAxiosInstance();
   const isSm = useMediaQuery("(max-width: 48em)");
@@ -233,6 +238,15 @@ const StoryPart = ({ part, isNew }: Props) => {
     sentiment === "shocking" ? "shocked" : sentiment
   }`;
 
+  // "Part N of M" when the planned total is known and not overshot (an ending
+  // can land past the plan), plain "Part N" otherwise.
+  const chipLabel =
+    partTotal != null && partIndex <= partTotal
+      ? t("partChipOf")
+          .replace("{n}", String(partIndex))
+          .replace("{m}", String(partTotal))
+      : t("partChip").replace("{n}", String(partIndex));
+
   return (
     <>
       <Stack gap="sm">
@@ -247,18 +261,19 @@ const StoryPart = ({ part, isNew }: Props) => {
               alt={botAlt}
               imageProps={{ loading: "lazy" }}
               radius="sm"
+              className={classes.avatarSticker}
             />
           </Group>
           {includeStoryImages && (
             <Group gap="sm" align="start" justify="center">
               {part.image ? (
-                <Box pos="relative" w={240} h={240}>
+                <Box pos="relative" w={240} h={240} className={classes.snap}>
                   <Image
                     src={part.image}
                     alt={part.keymoment}
-                    radius="md"
-                    w={240}
-                    h={240}
+                    radius="sm"
+                    w="100%"
+                    h="100%"
                   />
                   {part.imageSeconds != null && (
                     <Badge
@@ -280,19 +295,31 @@ const StoryPart = ({ part, isNew }: Props) => {
             </Group>
           )}
           <Box maw={{ sm: "100%", md: "50%" }}>
-            <Stack gap="xs">
-              <Paper radius="md" p="sm" className={classes.bubble}>
-                {textLoading && (
-                  <Loader color="white" size="sm" type="dots" p={0} m={0} />
-                )}
-                {displayText && displayText}
-              </Paper>
-              <ReadController
-                id={part.id}
-                text={displayText}
-                autoPlay={isNew && autoReadStorySections}
-              />
-            </Stack>
+            {/* Fibre story scrap: part chip + say controls + ink text. */}
+            <div className={classes.scrap}>
+              <span className={classes.partChip} aria-hidden="true">
+                {chipLabel}
+              </span>
+              <div className={paperClasses.sayline}>
+                <ReadController
+                  id={part.id}
+                  text={displayText}
+                  autoPlay={isNew && autoReadStorySections}
+                />
+                <p className={classes.scrapText}>
+                  {textLoading && (
+                    <Loader
+                      color="var(--ink)"
+                      size="sm"
+                      type="dots"
+                      p={0}
+                      m={0}
+                    />
+                  )}
+                  {displayText && displayText}
+                </p>
+              </div>
+            </div>
           </Box>
         </Flex>
         <Flex
@@ -307,11 +334,10 @@ const StoryPart = ({ part, isNew }: Props) => {
             alt=""
             imageProps={{ loading: "lazy" }}
             radius="sm"
+            className={classes.avatarSticker}
           />
           {finished && isNew && (
-            <Paper radius="md" p="sm" className={classes.bubble}>
-              {t("storyEnded")}
-            </Paper>
+            <p className={classes.endScrap}>{t("storyEnded")}</p>
           )}
           {part.actions &&
             part.actions.map((action: TAction, i: number) => {
@@ -324,6 +350,7 @@ const StoryPart = ({ part, isNew }: Props) => {
                     <ActionButton
                       action={action}
                       handleClick={() => openCapture()}
+                      alt={i % 2 === 1}
                     />
                     <ChatUploadModal
                       display={captureModal}
@@ -340,6 +367,7 @@ const StoryPart = ({ part, isNew }: Props) => {
                     key={i}
                     action={action}
                     handleClick={() => handleActionClick(action)}
+                    alt={i % 2 === 1}
                     emphasis={
                       actionKind(action) === "ending" &&
                       storyPhase === "resolution" &&
@@ -352,24 +380,22 @@ const StoryPart = ({ part, isNew }: Props) => {
               }
             })}
           {(actionLoading || outcome.isPending || ending.isPending) && (
-            <Loader color="gray" size="md" />
+            <Loader color="var(--fibre)" size="md" type="dots" />
           )}
           {/* Without these the story just stops: no choices arrive, or a failed
-              continuation restores the buttons with nothing to say why. */}
+              continuation restores the buttons with nothing to say why.
+              Errors follow the world's pattern: poppy-deep text on fibre. */}
           {actionError && (
-            <Button
-              size="sm"
-              variant="light"
-              color="red"
+            <button
+              type="button"
+              className={paperClasses.errorBtn}
               onClick={() => refetchActions()}
             >
               {t("choicesFailed")}
-            </Button>
+            </button>
           )}
           {(outcome.isError || ending.isError) && (
-            <Text size="sm" c="red">
-              {t("actionFailed")}
-            </Text>
+            <p className={paperClasses.errorChip}>{t("actionFailed")}</p>
           )}
         </Flex>
       </Stack>

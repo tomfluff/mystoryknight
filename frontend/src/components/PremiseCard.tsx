@@ -1,8 +1,9 @@
 import { TPremise } from "../types/Premise";
-import { Card, Loader, Spoiler, Text } from "@mantine/core";
+import { Loader, Spoiler } from "@mantine/core";
 import ReadController from "./ReadController";
 import useTranslation from "../hooks/useTranslation";
 import { useUiStrings } from "../i18n/strings";
+import classes from "./PremiseCard.module.css";
 
 type Props = {
   premise: TPremise;
@@ -19,25 +20,28 @@ const PremiseCard = ({ premise }: Props) => {
 
   if (shorttextLoading || longtextLoading)
     return (
-      <Card shadow="md" my={8} padding="sm" radius="md">
-        <Loader color="gray" type="dots" size="lg" />
-      </Card>
+      <div className={classes.card}>
+        <Loader color="var(--ink)" type="dots" size="lg" />
+      </div>
     );
 
   return (
-    <Card shadow="md" my={8} padding="sm" radius="md">
-      <Card.Section mb="sm">
-        <Text size="md" fw={500} p="xs" bg="violet" c="white">
-          {shorttext}
-        </Text>
-      </Card.Section>
-      <Spoiler maxHeight={50} showLabel={t("showMore")} hideLabel={t("hide")}>
+    <div className={classes.card}>
+      <p className={classes.label}>{t("yourBeginning")}</p>
+      <p className={classes.title}>{shorttext}</p>
+      <Spoiler
+        maxHeight={50}
+        showLabel={t("showMore")}
+        hideLabel={t("hide")}
+        className={classes.body}
+        classNames={{ control: classes.spoilerControl }}
+      >
         {longtext}
       </Spoiler>
-      <Card.Section p="xs">
+      <div className={classes.controls}>
         <ReadController id="card" text={longtext} />
-      </Card.Section>
-    </Card>
+      </div>
+    </div>
   );
 };
 

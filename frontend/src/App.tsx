@@ -24,7 +24,10 @@ import PreferenceModal from "./components/PreferenceModal/PreferenceModal";
 import { resetPreferences } from "./stores/preferencesStore";
 import AboutModal from "./components/AboutModal/AboutModal";
 import InstructionView from "./components/InstructionView";
+import PaperFilters from "./components/PaperFilters";
 import { useUiStrings } from "./i18n/strings";
+import classes from "./App.module.css";
+import paperClasses from "./components/paper.module.css";
 
 function App() {
   const [opened, { toggle: toggleNavbar }] = useDisclosure(false);
@@ -69,7 +72,11 @@ function App() {
   );
 
   return (
-    <AppShell
+    <>
+      {/* Torn-edge filters for every paper surface (entry mat, story mat,
+          navbar cards) — mounted exactly once. */}
+      <PaperFilters />
+      <AppShell
       header={{ height: 60 }}
       footer={{ height: 60 }}
       navbar={{
@@ -115,12 +122,16 @@ function App() {
           type="scroll"
           scrollHideDelay={500}
         >
-          <Flex direction="column">
-            {isCharacter && (
-              <CharacterCard image={image!} character={character!} />
-            )}
-            {isPremise && <PremiseCard premise={premise!} />}
-          </Flex>
+          {/* Paper cards need the mat ground to read — see App.module.css. */}
+          {(isCharacter || isPremise) && (
+            <div className={classes.navMat}>
+              <div className={paperClasses.grain} aria-hidden="true" />
+              {isCharacter && (
+                <CharacterCard image={image!} character={character!} />
+              )}
+              {isPremise && <PremiseCard premise={premise!} />}
+            </div>
+          )}
         </AppShell.Section>
       </AppShell.Navbar>
       <AppShell.Main w={rem("99vw")}>
@@ -154,7 +165,8 @@ function App() {
           </Box>
         </Flex>
       </AppShell.Footer>
-    </AppShell>
+      </AppShell>
+    </>
   );
 }
 

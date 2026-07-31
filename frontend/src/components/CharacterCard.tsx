@@ -1,13 +1,21 @@
-import { Card, Spoiler, Text, Image, rem, Loader } from "@mantine/core";
+import { Spoiler, Loader } from "@mantine/core";
 import { TCharacter } from "../types/Character";
 import { TImage } from "../types/Image";
 import ReadController from "./ReadController";
 import useTranslation from "../hooks/useTranslation";
 import { useUiStrings } from "../i18n/strings";
+import classes from "./CharacterCard.module.css";
 
 type Props = {
   image: TImage;
   character: TCharacter;
+};
+
+/* One chip per personality trait. Translation is a nicety, the trait is not:
+   while loading (or on failure) the original text renders. */
+const TraitChip = ({ trait }: { trait: string }) => {
+  const { data } = useTranslation(trait);
+  return <li>{data ?? trait}</li>;
 };
 
 const CharacterCard = ({ image, character }: Props) => {
@@ -20,27 +28,37 @@ const CharacterCard = ({ image, character }: Props) => {
   );
 
   return (
-    <Card shadow="sm" my={8} padding="sm" radius="md" withBorder>
-      <Card.Section mb="sm">
-        <Image src={image.src} alt={image.content} height={rem(128)} />
-      </Card.Section>
-      {fullname && (
-        <Text size="lg" fw={500}>
-          {fullname}
-        </Text>
+    <div className={classes.card}>
+      <span className={classes.tag}>{t("yourHeroTag")}</span>
+      <span className={classes.art}>
+        <img src={image.src} alt={image.content} loading="lazy" />
+      </span>
+      {fullname && <p className={classes.name}>{fullname}</p>}
+      {character.personality && character.personality.length > 0 && (
+        <ul className={classes.traits}>
+          {character.personality.map((trait) => (
+            <TraitChip key={trait} trait={trait} />
+          ))}
+        </ul>
       )}
       {backstory && (
-        <Spoiler maxHeight={100} showLabel={t("showMore")} hideLabel={t("hide")}>
+        <Spoiler
+          maxHeight={100}
+          showLabel={t("showMore")}
+          hideLabel={t("hide")}
+          className={classes.backstory}
+          classNames={{ control: classes.spoilerControl }}
+        >
           {backstory}
         </Spoiler>
       )}
       {(fullnameLoading || backstoryLoading) && (
-        <Loader color="gray" type="dots" size="lg" />
+        <Loader color="var(--ink)" type="dots" size="lg" />
       )}
-      <Card.Section p="xs">
+      <div className={classes.controls}>
         <ReadController text={backstory} />
-      </Card.Section>
-    </Card>
+      </div>
+    </div>
   );
 };
 

@@ -2,13 +2,13 @@ import { useRef } from "react";
 import { useDisclosure, useOs } from "@mantine/hooks";
 import getAxiosInstance from "../utils/axiosInstance";
 import { useUiStrings } from "../i18n/strings";
-import classes from "./InstructionView.module.css";
+import classes from "./paper.module.css";
 
 /*
- * Paper-sticker variant of ReadController for the entry view: one 44px round
- * play/pause sticker per line of copy. Same real /read endpoint and audio
- * handling as ReadController; only the shell differs (the story view keeps
- * ReadController untouched).
+ * Paper-sticker variant of ReadController: one 44px round play/pause sticker
+ * per line of copy. Same real /read endpoint and audio handling as
+ * ReadController; only the shell differs (ReadController adds a restart
+ * control and autoplay for story parts).
  */
 
 type Props = {

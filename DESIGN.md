@@ -30,14 +30,14 @@ sanctioned hex is the sparkle block, see below):
 
 | Role | Colour | Where | Why |
 |---|---|---|---|
-| Primary / story voice | `violet` | Theme `primaryColor`; story-part bubbles; action buttons | The app's identity colour; storyteller surfaces and story choices read as one voice |
+| Primary | `violet` | Theme `primaryColor` (modals, header controls, links) | The app's identity colour in Mantine chrome; inside the paper world the violet lives in the mat ground token |
 | Destructive | `orange.6` + `autoContrast` | Reset button (`App.tsx`) | `color="orange"` alone measured 3.58:1 at 14px and failed WCAG AA; `orange.6` with `autoContrast` keeps the destructive signal at AA contrast |
-| Inactive action | `gray` | `ActionButton` when `!action.active && !action.used` | Used-but-taken actions stay `violet` so the story's history keeps its colour |
-| Error | `red` (`c="red"`, `variant="light" color="red"`) | Inline failure text and retry buttons | Errors are always accompanied by text, never colour alone |
+| Inactive action | dimmed paper (`opacity` + flattened shadow + native `disabled`) | `ActionButton` when `!action.active && !action.used` | The taken action keeps its paper colour and gains a check sticker, so the story's history keeps its colour and the pick is marked by shape |
+| Error | `--poppy-deep` on `--fibre` (`.errorChip` in `paper.module.css`) | Inline failure text and retry affordances | Errors are always accompanied by text, never colour alone; the fibre chip keeps the red at 6.3:1 on any ground |
 | Brand flourish | gradient `violet → grape` | Footer author button | Decorative; only place a gradient is used |
 
 **Colour is never the sole signal.** The Ending affordance is deliberately NOT
-a colour change: the button stays violet and gains sparkles instead, because
+a colour change: the flap keeps its paper colour and gains sparkles instead, because
 yellow/orange reads as a warning and a colour-only change is invisible to
 colourblind users (`ActionButton.module.css` header comment). Apply the same
 rule to any new state signal: pair colour with a shape, icon, text, or motion
@@ -64,31 +64,46 @@ refactor away:
 names its scheme pair once, in CSS, never inline in JSX:
 
 - Use `light-dark()` with Mantine CSS variables in a CSS Module. Reference
-  implementation: `StoryPart.module.css` — story-bubble background is
-  `light-dark(var(--mantine-color-violet-4), var(--mantine-color-violet-8))`,
-  text white in both schemes.
+  implementation: the mat contact shadow in `paper.module.css`. (The previous
+  reference, the story bubble's violet pair in `StoryPart.module.css`, was
+  removed when the story view joined the paper-craft world: mats are
+  scheme-independent scenes, so the fibre scrap has no scheme pair to
+  declare.)
 - Theme-level component `defaultProps` / `vars` are also acceptable for
   Mantine-wide overrides.
 - Inline `colorScheme === "dark"` ternaries are banned; the last ones were
   removed from `StoryPart.tsx`. `useMantineColorScheme()` remains only where
   the *logic* needs the scheme (e.g. `ColorSchemeToggle`).
 
-## Entry view: the paper-craft world
+## The paper-craft world (entry view, story view, navbar cards)
 
-The entry view (`InstructionView.tsx` + `InstructionView.module.css`, approved
-mockup `.impeccable/variants/v1r-paper-craft.html`) is a self-contained visual
-world: three torn construction-paper step sheets, worked through in order, on
-a deep-violet craft mat. **The world is scoped to the entry view.** The story
-view remains on the incumbent Mantine violet system documented above;
-extending the paper world into the story view is an open decision — do not
-creep it in piecemeal.
+The paper-craft world (approved mockup
+`.impeccable/variants/v1r-paper-craft.html`): torn construction-paper sheets
+on a deep-violet craft mat. It began entry-only; the once-open decision to
+extend it is now closed — the world deliberately spans the entry view
+(`InstructionView.*`), the story view (`StoryView.*`, `StoryPart.*`,
+`ActionButton.*`, `ReadController.tsx`) and the navbar hero/premise cards
+(`CharacterCard.*`, `PremiseCard.*` on the `.navMat` swatch in
+`App.module.css`). Header, footer and modals stay on the incumbent Mantine
+system. The shared mechanics live in ONE place — `paper.module.css` (tokens,
+`.mat` scene + focus ring, `.paper` torn-sheet primitive, `.grain`,
+say-sticker grammar, error chip) plus `PaperFilters.tsx` (the `#msk-tear*`
+filters, mounted once in `App`); view modules only set colourway/tilt
+variables on top.
 
-- **Sanctioned hex token block on `.entry`.** Like the sparkle block, this
+- **Sanctioned hex token block, declared once.** Like the sparkle block, this
   world is out-of-gamut for the Mantine palette on purpose. Its colours are
   CSS custom properties (`--ground`, `--ink`, `--fibre`, `--poppy`,
   `--marigold`, `--kingfisher`, `--sky`, `--grass`, `--violet`, ...) declared
-  once, on `.entry`, and only there. Inside the mat, reference the tokens;
-  never mint fresh hex, and never use these tokens outside the entry view.
+  once, at `:root` in `paper.module.css` — at `:root` rather than on `.mat`
+  because say stickers and error chips also render inside Mantine portals
+  (action popover, premise modal), which custom properties scoped to a mat
+  cannot reach. Reference the tokens; never mint fresh hex, and never use the
+  tokens to paint non-world surfaces (header/footer/modals chrome). Sanctioned
+  exceptions, all mockup-sourced one-offs: the deep-sea ink `#103245` on sky
+  paper (PremiseCard), the hero-card chip creams (`#ffe9c2`/`#fbf6ec`), the
+  check-sticker green `#2f8f3c`, and the translucent tape fills — tokenise any
+  of these the moment it recurs on a third surface.
 - **The mat is a scene, not a themed surface.** Saturated paper and the white
   fibre tear cores only read against the deep-violet ground, so the mat keeps
   the same colours in BOTH colour schemes — like a photograph would. Every
@@ -99,17 +114,18 @@ creep it in piecemeal.
   convention, not a violation of it.
 - **Torn-paper primitive.** A sheet is `.paper`: `::before` is the white
   fibre core, `::after` the coloured sheet, each displaced by its own
-  SVG-turbulence filter (`TearFilters` in `InstructionView.tsx`, referenced
-  as `url(#msk-tear*)`). Per-sheet variables (`--sheet`, `--tf1`, `--tf2`,
+  SVG-turbulence filter (`PaperFilters.tsx`, mounted once in `App`,
+  referenced as `url(#msk-tear*)`). Per-sheet variables (`--sheet`, `--tf1`, `--tf2`,
   shadow vars) pick the colourway and tear seeds — vary the seeds between
   neighbouring sheets so no two tears repeat. If an engine drops the
   displacement filter (known Safari risk) the sheets fall back to straight
   rounded edges: layout and contrast must stay filter-independent.
-- **Two-tone dashed focus ring (entry-scoped).** `.entry :focus-visible` is a
-  dark dashed outline (`3px dashed var(--ink)`) over a white halo
-  (`box-shadow: 0 0 0 4px var(--fibre)`): no single ring colour is visible on
-  every paper colour, but ink-on-fibre is. Scoped to `.entry`; everywhere
-  else Mantine's default rings stand.
+- **Two-tone dashed focus ring (mat-scoped).** `.mat :focus-visible`
+  (`paper.module.css`) is a dark dashed outline (`3px dashed var(--ink)`)
+  over a white halo (`box-shadow: 0 0 0 4px var(--fibre)`): no single ring
+  colour is visible on every paper colour, but ink-on-fibre is. Scoped to
+  mats; everywhere else (including portalled popovers/modals) Mantine's
+  default rings stand.
 - **Display font policy.** `--font-display` is Titan One, `--font-body`
   Nunito — round, friendly faces; the Latin subsets ship with the entry-view
   chunk. They hold no Hebrew/Japanese glyphs, so the stacks list self-hosted
@@ -117,14 +133,17 @@ creep it in piecemeal.
   Those are heavy (M PLUS's CJK unicode-range set alone is ~450KB of
   `@font-face` CSS), so each loads as a lazy chunk only when its language is
   active (`frontend/src/i18n/fonts.ts`, triggered from
-  `useLanguageDirection`). The story view keeps the default Mantine type
-  scale.
-- **Say sticker (TTS affordance).** Every line of entry copy carries a
-  `SaySticker` (`SaySticker.tsx`): a 44px round play/pause sticker hitting
-  the same `/read` endpoint as the story view's `ReadController` — only the
-  shell differs. Only one sticker plays at a time (module-level handle);
-  playing state is colour + glyph (green + pause bars), never colour alone,
-  and under reduced motion the pulse stops but the swap remains.
+  `useLanguageDirection`). Every mat uses the world's faces (`--font-body`
+  on `.mat`; `--font-display` for names/titles/"The End"); Mantine chrome
+  outside the mats keeps the default type scale.
+- **Say sticker (TTS affordance).** Every line of world copy carries a say
+  control in the sticker grammar (`.say` in `paper.module.css`):
+  `SaySticker.tsx` is the single 44px play/pause sticker on entry copy;
+  `ReadController.tsx` is the story-side pair (play/pause + kingfisher
+  restart, plus auto-play for new parts) — both hit the same `/read`
+  endpoint, only the shell differs. Playing state is colour + glyph (green +
+  pause bars), never colour alone, and under reduced motion the pulse stops
+  but the swap remains.
 - **Hero gallery (the no-camera path).** `HeroGallery.tsx` offers six
   ready-made drawings (`frontend/public/heroes/hero-1..6.webp`) that feed the
   exact same `/character` pipeline as a webcam capture: the picked WebP is
@@ -133,7 +152,8 @@ creep it in piecemeal.
   entry paths.
 - **Motion.** The tape peel on the current sheet is the one authored motion
   of the view; everything else settles. Under `prefers-reduced-motion` all
-  animation/transition in `.entry` is dropped wholesale, but every state
+  animation/transition on `.mat` surfaces (`paper.module.css`) is dropped
+  wholesale, but every state
   signal keeps a static form (tape presence, check sticker, lock chip, the
   green pause swap) — same rule as the sparkles.
 
@@ -151,9 +171,10 @@ creep it in piecemeal.
 
 ## Typography and headings
 
-- Default Mantine type scale in the app shell and story view; the entry view
-  carries its own display/body faces (see "Entry view: the paper-craft
-  world"). Footer wordmark uses `ff="heading"` italic.
+- Default Mantine type scale in the app shell (header/footer/modals); every
+  mat surface (entry and story views) uses the paper world's display/body
+  faces (see "The paper-craft world"). Footer wordmark uses `ff="heading"`
+  italic.
 - Button labels use `tt="none"`, not `capitalize`: action titles are
   sentence-style instructions, and Title Casing produced "Follow The Red
   Smudge" (`ActionButton.tsx`).

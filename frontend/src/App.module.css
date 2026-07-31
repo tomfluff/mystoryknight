@@ -1,0 +1,20 @@
+/*
+ * App-shell styles for the paper-craft extension.
+ *
+ * Navbar decision: the hero/premise cards are torn paper, and fibre tear
+ * cores only read against the deep-violet mat ground — on the light-scheme
+ * navbar they would look like torn scraps on a white desk with no scene. So
+ * the card region alone gets a mat swatch; the navbar itself (and header,
+ * footer, modals) stays an incumbent Mantine surface. The swatch renders only
+ * when at least one card exists, so no empty violet block sits in the burger
+ * menu before a character is made.
+ */
+
+.navMat {
+  composes: mat from "./components/paper.module.css";
+  padding: 1.3rem 0.9rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-block: 0.5rem;
+}

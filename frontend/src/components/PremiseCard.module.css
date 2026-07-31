@@ -1,0 +1,53 @@
+/*
+ * Premise card in the paper-craft world (spec: the mockup's .premisecard): a
+ * sky paper scrap pinned under the hero card — "Your beginning" label, the
+ * premise title in the display voice, the description, say controls. Sits on
+ * the navbar's mat swatch (App.module.css .navMat).
+ */
+
+.card {
+  composes: paper from "./paper.module.css";
+  --sheet: var(--sky);
+  --tf1: url(#msk-tearE);
+  --tf2: url(#msk-tearB);
+  --shy: 7px;
+  --shb: 15px;
+  --sha: 0.38;
+  color: var(--ink);
+  padding: 0.85rem 1.1rem 0.95rem;
+  transform: rotate(1.1deg);
+}
+
+/* deep-sea ink: the mockup's tint darkened one step — #123a52 measured
+   4.45:1 on sky, a hair under AA; #103245 clears 5:1 */
+.label {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #103245;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.05rem;
+  margin: 0.15rem 0 0;
+}
+
+.body {
+  margin: 0.35rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.controls {
+  margin-block-start: 0.7rem;
+}
+
+/* Mantine's default violet anchor fails contrast on sky paper; tint it from
+   the sheet's own secondary ink and keep the underline as the link signal. */
+.spoilerControl {
+  color: #103245;
+  font-weight: 800;
+  text-decoration: underline;
+}

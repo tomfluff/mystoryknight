@@ -327,6 +327,43 @@ const strings = {
     ja: "もういちど",
     es: "Inténtalo otra vez",
   },
+  /* ---- Story view (paper-craft world) ---- */
+  yourStory: {
+    en: "Your story",
+    he: "הסיפור שלכם",
+    ja: "あなたのおはなし",
+    es: "Tu cuento",
+  },
+  partChip: {
+    en: "Part {n}",
+    he: "חלק {n}",
+    ja: "だい{n}わ",
+    es: "Parte {n}",
+  },
+  partChipOf: {
+    en: "Part {n} of {m}",
+    he: "חלק {n} מתוך {m}",
+    ja: "だい{n}わ・ぜんぶで{m}わ",
+    es: "Parte {n} de {m}",
+  },
+  storyFailed: {
+    en: "The story got stuck on the way. Let’s try again!",
+    he: "הסיפור נתקע בדרך. בואו ננסה שוב!",
+    ja: "おはなしがとちゅうでつっかえちゃった。もういちどためしてみよう！",
+    es: "El cuento se quedó atascado por el camino. ¡Vamos a intentarlo otra vez!",
+  },
+  yourHeroTag: {
+    en: "Your hero",
+    he: "הגיבור שלכם",
+    ja: "あなたのヒーロー",
+    es: "Tu héroe",
+  },
+  yourBeginning: {
+    en: "Your beginning",
+    he: "ההתחלה שלכם",
+    ja: "おはなしのはじまり",
+    es: "Tu comienzo",
+  },
   /* ---- Entry view (paper-craft setup steps) ---- */
   entryTitle: {
     en: "Let’s make a story together.",

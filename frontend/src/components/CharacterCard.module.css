@@ -1,0 +1,94 @@
+/*
+ * Hero card in the paper-craft world (spec: the mockup's .herocard): a taped
+ * fibre card pinned beside the story — the child's drawing in a white frame,
+ * the hero's name in the display voice, trait chips, backstory, say controls.
+ * Sits on the navbar's mat swatch (App.module.css .navMat).
+ */
+
+.card {
+  composes: paper from "./paper.module.css";
+  --sheet: var(--fibre);
+  --tf1: url(#msk-tearA);
+  --tf2: url(#msk-tearD);
+  --shy: 9px;
+  --shb: 20px;
+  --sha: 0.42;
+  color: var(--ink);
+  padding: 0.9rem 0.9rem 1rem;
+  transform: rotate(-1.6deg);
+  /* Head-room for the tape tag's overhang. */
+  margin-block-start: 0.6rem;
+}
+
+/* masking-tape name tag pinned over the top edge */
+.tag {
+  position: absolute;
+  inset-block-start: -13px;
+  inset-inline-start: 14px;
+  z-index: 2;
+  background: rgba(255, 248, 235, 0.85);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.7rem;
+  clip-path: polygon(3% 0, 97% 5%, 100% 30%, 97% 62%, 100% 100%, 3% 95%, 0 64%, 3% 30%);
+  transform: rotate(-3deg);
+  white-space: nowrap;
+}
+
+.art {
+  display: block;
+  border-radius: 11px;
+  overflow: hidden;
+  background: #fbf6ec;
+  border: 3px solid #fff;
+  box-shadow: 0 3px 8px rgba(14, 7, 28, 0.22);
+}
+.art img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.12rem;
+  margin: 0.65rem 0 0;
+}
+
+.traits {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+.traits li {
+  background: #ffe9c2;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.22rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.backstory {
+  margin: 0.5rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.controls {
+  margin-block-start: 0.7rem;
+}
+
+/* Mantine's default violet anchor is washy on fibre; kingfisher keeps the
+   link colour AA with the underline as the non-colour signal. */
+.spoilerControl {
+  color: var(--kingfisher);
+  font-weight: 800;
+  text-decoration: underline;
+}
