@@ -32,6 +32,7 @@ import {
 } from "../stores/adventureStore";
 import { usePreferencesStore } from "../stores/preferencesStore";
 import useTranslation from "../hooks/useTranslation";
+import { useUiStrings } from "../i18n/strings";
 import { buildStoryContext, createCallContext } from "../utils/llmIntegration";
 import { useSessionStore } from "../stores/sessionStore";
 import { useDisclosure } from "@mantine/hooks";
@@ -63,6 +64,7 @@ const actionKind = (action: TAction): TActionKind => {
 };
 
 const StoryPart = ({ part, isNew }: Props) => {
+  const t = useUiStrings();
   const instance = getAxiosInstance();
   const { colorScheme } = useMantineColorScheme();
   const isSm = useMediaQuery("(max-width: 48em)");
@@ -319,7 +321,7 @@ const StoryPart = ({ part, isNew }: Props) => {
               bg={colorScheme === "dark" ? "violet.8" : "violet.4"}
               c={"white"}
             >
-              The story has ended
+              {t("storyEnded")}
             </Paper>
           )}
           {part.actions &&
@@ -372,12 +374,12 @@ const StoryPart = ({ part, isNew }: Props) => {
               color="red"
               onClick={() => refetchActions()}
             >
-              Choices did not load. Try again
+              {t("choicesFailed")}
             </Button>
           )}
           {(outcome.isError || ending.isError) && (
             <Text size="sm" c="red">
-              That did not work. Pick again.
+              {t("actionFailed")}
             </Text>
           )}
         </Flex>

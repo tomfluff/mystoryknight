@@ -3,6 +3,7 @@ import { TCharacter } from "../types/Character";
 import { TImage } from "../types/Image";
 import ReadController from "./ReadController";
 import useTranslation from "../hooks/useTranslation";
+import { useUiStrings } from "../i18n/strings";
 
 type Props = {
   image: TImage;
@@ -10,6 +11,7 @@ type Props = {
 };
 
 const CharacterCard = ({ image, character }: Props) => {
+  const t = useUiStrings();
   const { data: fullname, isLoading: fullnameLoading } = useTranslation(
     character.fullname
   );
@@ -28,7 +30,7 @@ const CharacterCard = ({ image, character }: Props) => {
         </Text>
       )}
       {backstory && (
-        <Spoiler maxHeight={100} showLabel="Show more" hideLabel="Hide">
+        <Spoiler maxHeight={100} showLabel={t("showMore")} hideLabel={t("hide")}>
           {backstory}
         </Spoiler>
       )}

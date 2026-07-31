@@ -15,15 +15,26 @@ import {
 } from "../stores/preferencesStore";
 import { complexityOptions, languageOptions } from "../utils/llmIntegration";
 import { useOs } from "@mantine/hooks";
+import { TUiStringKey, useUiStrings } from "../i18n/strings";
+
+// Slider mark labels come from complexityOptions; map them to string keys so
+// they follow the language preference.
+const complexityLabelKeys: Record<string, TUiStringKey> = {
+  Easy: "complexityEasy",
+  Medium: "complexityMedium",
+  Hard: "complexityHard",
+  Expert: "complexityExpert",
+};
 
 const PreferencePane = () => {
   const os = useOs();
+  const t = useUiStrings();
   const storyLanguageOptions = languageOptions.map((d) => ({
     label: d.label,
     value: d.value,
   }));
   const storyComplexityOptions = complexityOptions.map((d) => ({
-    label: d.label,
+    label: t(complexityLabelKeys[d.label]),
     value: d.value,
   }));
   const maxComplexity = Math.max(...complexityOptions.map((d) => d.value));
@@ -46,8 +57,8 @@ const PreferencePane = () => {
     <Card shadow="sm">
       <Stack gap="md">
         <Select
-          label="Story Language"
-          description="Select the language of the story."
+          label={t("storyLanguage")}
+          description={t("storyLanguageDesc")}
           radius="md"
           data={storyLanguageOptions}
           value={language}
@@ -63,8 +74,8 @@ const PreferencePane = () => {
             setPreferences({ autoReadStorySections: e.currentTarget.checked });
             setAutoReadStorySections(e.currentTarget.checked);
           }}
-          label="Auto-read"
-          description="Automatically read the story sections."
+          label={t("autoRead")}
+          description={t("autoReadDesc")}
           disabled={os === "ios"}
         />
 
@@ -74,13 +85,13 @@ const PreferencePane = () => {
             setPreferences({ includeStoryImages: e.currentTarget.checked });
             setIncludeStoryImages(e.currentTarget.checked);
           }}
-          label="Story Images"
-          description="Include images in the story."
+          label={t("storyImages")}
+          description={t("storyImagesDesc")}
         />
 
         <Divider />
         <Box>
-          <Text size="sm">Story Complexity</Text>
+          <Text size="sm">{t("storyComplexity")}</Text>
           <Slider
             marks={storyComplexityOptions}
             label={null}

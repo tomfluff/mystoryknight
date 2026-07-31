@@ -2,12 +2,14 @@ import { TPremise } from "../types/Premise";
 import { Card, Loader, Spoiler, Text } from "@mantine/core";
 import ReadController from "./ReadController";
 import useTranslation from "../hooks/useTranslation";
+import { useUiStrings } from "../i18n/strings";
 
 type Props = {
   premise: TPremise;
 };
 
 const PremiseCard = ({ premise }: Props) => {
+  const t = useUiStrings();
   const { data: shorttext, isLoading: shorttextLoading } = useTranslation(
     premise.title
   );
@@ -29,7 +31,7 @@ const PremiseCard = ({ premise }: Props) => {
           {shorttext}
         </Text>
       </Card.Section>
-      <Spoiler maxHeight={50} showLabel="Show more" hideLabel="Hide">
+      <Spoiler maxHeight={50} showLabel={t("showMore")} hideLabel={t("hide")}>
         {longtext}
       </Spoiler>
       <Card.Section p="xs">

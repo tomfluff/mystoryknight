@@ -8,11 +8,13 @@ type TComplexity = {
   prompt: string;
 };
 
+// Endonyms on purpose: each language names itself, so a child can always find
+// their own language in the picker.
 export const languageOptions = [
   { label: "English", value: "en" },
-  { label: "Hebrew", value: "he" },
-  { label: "Japanese", value: "ja" },
-  { label: "Spanish", value: "es" },
+  { label: "עברית", value: "he" },
+  { label: "日本語", value: "ja" },
+  { label: "Español", value: "es" },
 ];
 
 export const complexityOptions: TComplexity[] = [

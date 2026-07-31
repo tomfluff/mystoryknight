@@ -2,6 +2,7 @@ import useTranslation from "../hooks/useTranslation";
 import { Accordion, Button, Group, Stack, Text } from "@mantine/core";
 import { TPremise } from "../types/Premise";
 import ReadController from "./ReadController";
+import { useUiStrings } from "../i18n/strings";
 
 type Props = {
   premise: TPremise;
@@ -9,6 +10,7 @@ type Props = {
 };
 
 const PremiseAccordionItem = ({ premise, onSelect }: Props) => {
+  const t = useUiStrings();
   const { data: shorttext, isLoading: shorttextLoading } = useTranslation(
     premise.title
   );
@@ -19,7 +21,7 @@ const PremiseAccordionItem = ({ premise, onSelect }: Props) => {
   if (shorttextLoading || longtextLoading) {
     return (
       <Accordion.Item value={"loading"}>
-        <Accordion.Control>Loading...</Accordion.Control>
+        <Accordion.Control>{t("loading")}</Accordion.Control>
       </Accordion.Item>
     );
   }
@@ -32,7 +34,9 @@ const PremiseAccordionItem = ({ premise, onSelect }: Props) => {
           <Text>{longtext}</Text>
           <Group grow>
             <ReadController text={longtext} />
-            <Button onClick={() => onSelect(premise)}>Start Adventure</Button>
+            <Button onClick={() => onSelect(premise)}>
+              {t("startAdventure")}
+            </Button>
           </Group>
         </Stack>
       </Accordion.Panel>
