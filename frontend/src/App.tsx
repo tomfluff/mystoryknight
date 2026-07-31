@@ -1,7 +1,7 @@
 import "./App.css";
 import {
+  Anchor,
   AppShell,
-  Box,
   Burger,
   Button,
   Flex,
@@ -12,7 +12,6 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link } from "react-router-dom";
-import { FaStar } from "react-icons/fa";
 import StoryView from "./components/StoryView";
 import { ColorSchemeToggle } from "./components/ColorSchemeToggle/ColorSchemeToggle";
 import { resetSession, useSessionStore } from "./stores/sessionStore";
@@ -70,8 +69,10 @@ function App() {
 
   return (
     <AppShell
-      header={{ height: 60 }}
-      footer={{ height: 60 }}
+      /* 45 = a 44px touch target with 1px to spare, so the controls keep
+         their full hit area in a shorter band. 30 is the credit strip. */
+      header={{ height: 45 }}
+      footer={{ height: 30 }}
       navbar={{
         width: 320,
         breakpoint: "xs",
@@ -84,7 +85,8 @@ function App() {
       }}
       padding="sm"
     >
-      <AppShell.Header px="md" py={8}>
+      {/* py=0: the 44px controls need the whole 45px band. */}
+      <AppShell.Header px="md" py={0}>
         <Flex justify="space-between" align="center" direction="row" h="100%">
           <Burger
             opened={opened}
@@ -106,7 +108,7 @@ function App() {
             />
             <Text size="md">MyStoryKnight.</Text>
           </Group>
-          {/* Below `sm` these controls move to the navbar; the fixed 60px
+          {/* Below `sm` these controls move to the navbar; the fixed 45px
               header cannot fit them next to the burger on small screens. */}
           <Group gap="sm" visibleFrom="sm">
             {controls}
@@ -132,37 +134,32 @@ function App() {
           </Flex>
         </AppShell.Section>
       </AppShell.Navbar>
-      {/* pb clears the fixed 60px footer: without it the footer sits over the
-          end of a long entry card (the hero gallery ran 148px underneath it). */}
-      <AppShell.Main w={rem("99vw")} pb={rem(76)}>
+      {/* pb clears the fixed footer: without it the footer sits over the end
+          of a long entry card (the hero gallery ran 148px underneath it). */}
+      <AppShell.Main w={rem("99vw")} pb={rem(46)}>
         {(!isSession || !isCharacter || !isPremise) && <InstructionView />}
         {isSession && isCharacter && isPremise && <StoryView />}
       </AppShell.Main>
-      {/* py=8 leaves 44px of usable height inside the fixed 60px footer, so
-          the author link can meet the 44px touch target. */}
-      <AppShell.Footer px="sm" py={8}>
-        <Flex w="100%" h="100%" justify="center" align="center" gap="sm">
-          <Box>
-            <Text component="span" fw={500} fs="italic" ff="heading">
+      {/* A 30px credit strip. The author link is inline text rather than a
+          pill: a 44px control cannot fit this band, and inline links inside a
+          sentence are exempt from the target-size rule (WCAG 2.5.8). */}
+      <AppShell.Footer px="sm" py={0}>
+        <Flex w="100%" h="100%" justify="center" align="center">
+          <Text size="xs" c="dimmed">
+            <Text component="span" fw={500} fs="italic" ff="heading" size="xs">
               MyStoryKnight.
             </Text>{" "}
             is a project by{" "}
-            <Button
+            <Anchor
               component={Link}
               to="https://github.com/tomfluff"
               replace={false}
-              radius="lg"
-              size="compact-sm"
-              h={44}
-              variant="gradient"
-              gradient={{ from: "violet", to: "grape", deg: 90 }}
-              c="white"
-              px="sm"
-              leftSection={<FaStar />}
+              size="xs"
+              fw={600}
             >
               tomfluff
-            </Button>
-          </Box>
+            </Anchor>
+          </Text>
         </Flex>
       </AppShell.Footer>
     </AppShell>

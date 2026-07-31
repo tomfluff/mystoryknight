@@ -74,7 +74,6 @@ const HeroGallery = ({ disabled }: { disabled?: boolean }) => {
       <SimpleGrid
         cols={3}
         spacing="xs"
-        className={classes.grid}
         aria-label={t("galleryAria")}
       >
         {HEROES.map((hero, i) => (

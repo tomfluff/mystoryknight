@@ -1,0 +1,33 @@
+/*
+ * Selectable premise card. Selection is carried by the radio, the border and
+ * the tint together -- never by colour alone (DESIGN.md, "Colour is never the
+ * sole signal").
+ */
+.option {
+  display: block;
+  cursor: pointer;
+  transition: border-color 100ms ease, background-color 100ms ease;
+}
+
+.option:hover {
+  border-color: var(--mantine-primary-color-filled);
+}
+
+.option:has(:focus-visible) {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
+}
+
+.option[data-selected] {
+  border-color: var(--mantine-primary-color-filled);
+  background-color: light-dark(
+    var(--mantine-primary-color-light),
+    var(--mantine-primary-color-light)
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .option {
+    transition: none;
+  }
+}

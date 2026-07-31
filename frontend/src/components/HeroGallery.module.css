@@ -39,12 +39,9 @@
   border-color: var(--mantine-primary-color-filled);
 }
 
-/* The gallery is a secondary route, not the headline: cap it so it stays a
-   compact strip inside the entry card instead of stretching to the card's
-   full width and pushing step 3 off the screen. */
-.grid {
-  max-width: 26rem;
-}
+/* The gallery fills the card's content width now that the card has a fixed
+   measure -- it no longer has to defend itself against a card that stretched
+   to its longest sentence. */
 
 .art {
   border-radius: var(--mantine-radius-sm);

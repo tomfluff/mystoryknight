@@ -1,19 +1,12 @@
 import getAxiosInstance from "../utils/axiosInstance";
 import { useMediaQuery } from "@mantine/hooks";
-import {
-  Accordion,
-  Button,
-  Container,
-  Modal,
-  Loader,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { Button, Container, Modal, Loader, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { TCharacter } from "../types/Character";
 import { setPremise } from "../stores/adventureStore";
 import { TPremise } from "../types/Premise";
-import PremiseAccordionItem from "./PremiseAccordionItem";
+import PremiseOption from "./PremiseOption";
 import { createCallContext } from "../utils/llmIntegration";
 import { useUiStrings } from "../i18n/strings";
 
@@ -46,8 +39,14 @@ const PremiseSelectModal = ({ character, display, finalAction }: Props) => {
     // NOTE: React-Query storage and cache will only persist until refresh so need to check existing storage
   });
 
-  const handlePremiseSelect = (premise: TPremise) => {
-    setPremise(premise);
+  /* Browsing and committing are separate: picking a card only marks it, and
+     the single button below starts the story. Previously each card carried
+     its own start button, so there was no way to compare without committing. */
+  const [selected, setSelected] = useState<number | null>(null);
+
+  const startAdventure = () => {
+    if (selected == null || !premiseList?.[selected]) return;
+    setPremise(premiseList[selected]);
     finalAction();
   };
 
@@ -84,17 +83,25 @@ const PremiseSelectModal = ({ character, display, finalAction }: Props) => {
           </Stack>
         )}
         {!isFetching && !isError && premiseList && premiseList.length > 0 && (
-          <Accordion>
-            {premiseList.map((premise: TPremise, index: number) => {
-              return (
-                <PremiseAccordionItem
-                  premise={premise}
-                  key={index}
-                  onSelect={handlePremiseSelect}
-                />
-              );
-            })}
-          </Accordion>
+          <Stack gap="sm" role="radiogroup" aria-label={t("premiseTitle")}>
+            {premiseList.map((premise: TPremise, index: number) => (
+              <PremiseOption
+                premise={premise}
+                key={index}
+                selected={selected === index}
+                onSelect={() => setSelected(index)}
+              />
+            ))}
+            <Button
+              size="md"
+              h={44}
+              mt="xs"
+              disabled={selected == null}
+              onClick={startAdventure}
+            >
+              {t("startAdventure")}
+            </Button>
+          </Stack>
         )}
       </Container>
     </Modal>

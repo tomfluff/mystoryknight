@@ -105,7 +105,12 @@ const InstructionView = () => {
   return (
     <>
       <Center>
-        <Paper withBorder p="xl" radius="lg" mt={rem(20)}>
+        {/* Fixed measure rather than "as wide as the longest sentence": the
+            card used to size itself to its copy, so it stretched to ~650px
+            and left the hero gallery adrift in an empty right half. 34rem
+            keeps the step text at a readable line length and the gallery
+            filling its width. */}
+        <Paper withBorder p="xl" radius="lg" mt={rem(20)} w="100%" maw={rem(544)}>
           <Stack align="center" mb={rem(20)}>
             <Title order={1} size="h3" fs="italic">
               Your Adventure Awaits
