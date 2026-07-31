@@ -5,7 +5,6 @@ import {
   Box,
   Flex,
   Paper,
-  useMantineColorScheme,
   Avatar,
   Group,
   Stack,
@@ -37,6 +36,7 @@ import { buildStoryContext, createCallContext } from "../utils/llmIntegration";
 import { useSessionStore } from "../stores/sessionStore";
 import { useDisclosure } from "@mantine/hooks";
 import ChatUploadModal from "./ChatUploadModal";
+import classes from "./StoryPart.module.css";
 
 type Props = {
   part: TStoryPart;
@@ -66,7 +66,6 @@ const actionKind = (action: TAction): TActionKind => {
 const StoryPart = ({ part, isNew }: Props) => {
   const t = useUiStrings();
   const instance = getAxiosInstance();
-  const { colorScheme } = useMantineColorScheme();
   const isSm = useMediaQuery("(max-width: 48em)");
   const { targetRef, scrollIntoView } = useScrollIntoView<HTMLDivElement>({
     duration: 500,
@@ -265,11 +264,11 @@ const StoryPart = ({ part, isNew }: Props) => {
                     <Badge
                       pos="absolute"
                       bottom={6}
-                      left={6}
                       size="sm"
                       variant="filled"
                       color="dark"
-                      style={{ opacity: 0.75 }}
+                      /* insetInlineStart, not left: mirrors under RTL. */
+                      style={{ opacity: 0.75, insetInlineStart: 6 }}
                     >
                       {part.imageSeconds}s
                     </Badge>
@@ -282,12 +281,7 @@ const StoryPart = ({ part, isNew }: Props) => {
           )}
           <Box maw={{ sm: "100%", md: "50%" }}>
             <Stack gap="xs">
-              <Paper
-                radius="md"
-                p="sm"
-                bg={colorScheme === "dark" ? "violet.8" : "violet.4"}
-                c={"white"}
-              >
+              <Paper radius="md" p="sm" className={classes.bubble}>
                 {textLoading && (
                   <Loader color="white" size="sm" type="dots" p={0} m={0} />
                 )}
@@ -315,12 +309,7 @@ const StoryPart = ({ part, isNew }: Props) => {
             radius="sm"
           />
           {finished && isNew && (
-            <Paper
-              radius="md"
-              p="sm"
-              bg={colorScheme === "dark" ? "violet.8" : "violet.4"}
-              c={"white"}
-            >
+            <Paper radius="md" p="sm" className={classes.bubble}>
               {t("storyEnded")}
             </Paper>
           )}

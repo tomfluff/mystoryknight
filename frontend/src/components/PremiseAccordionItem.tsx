@@ -34,7 +34,7 @@ const PremiseAccordionItem = ({ premise, onSelect }: Props) => {
           <Text>{longtext}</Text>
           <Group grow>
             <ReadController text={longtext} />
-            <Button onClick={() => onSelect(premise)}>
+            <Button h={44} onClick={() => onSelect(premise)}>
               {t("startAdventure")}
             </Button>
           </Group>

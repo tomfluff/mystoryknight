@@ -55,22 +55,18 @@ refactor away:
 
 ## Dark mode
 
-**Current approach (incumbent):** components branch by hand on
-`useMantineColorScheme()`, e.g. `StoryPart.tsx`:
-`bg={colorScheme === "dark" ? "violet.8" : "violet.4"}` with `c="white"` in
-both schemes. This works but every new surface must remember to branch — the
-audit flagged it as the symptom of the undocumented system.
+**Convention:** surfaces must not re-decide colours per component. A surface
+names its scheme pair once, in CSS, never inline in JSX:
 
-**Target convention (upcoming refactor — follow it for new code where
-possible):** surfaces must not re-decide colours per component. Move the
-scheme pair into the theme layer so components name a role once:
-
-- Prefer Mantine CSS variables / `light-dark()` in CSS Modules, or theme-level
-  component `defaultProps` / `vars`, over inline `colorScheme` ternaries.
-- Encode the existing pair as the token: story-bubble background is
-  `violet.4` (light) / `violet.8` (dark), text white in both. New surfaces
-  define their pair the same way, in one place.
-- Inline `colorScheme === "dark"` branches are legacy; do not add new ones.
+- Use `light-dark()` with Mantine CSS variables in a CSS Module. Reference
+  implementation: `StoryPart.module.css` — story-bubble background is
+  `light-dark(var(--mantine-color-violet-4), var(--mantine-color-violet-8))`,
+  text white in both schemes.
+- Theme-level component `defaultProps` / `vars` are also acceptable for
+  Mantine-wide overrides.
+- Inline `colorScheme === "dark"` ternaries are banned; the last ones were
+  removed from `StoryPart.tsx`. `useMantineColorScheme()` remains only where
+  the *logic* needs the scheme (e.g. `ColorSchemeToggle`).
 
 ## Typography and headings
 

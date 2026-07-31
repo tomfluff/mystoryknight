@@ -117,6 +117,24 @@ const strings = {
     ja: "エキスパート",
     es: "Experto",
   },
+  readAloud: {
+    en: "Read aloud",
+    he: "הקראה בקול",
+    ja: "よみあげる",
+    es: "Leer en voz alta",
+  },
+  pauseReading: {
+    en: "Pause reading",
+    he: "השהיית ההקראה",
+    ja: "よみあげをとめる",
+    es: "Pausar la lectura",
+  },
+  restartReading: {
+    en: "Read from the beginning",
+    he: "הקראה מההתחלה",
+    ja: "さいしょからよむ",
+    es: "Leer desde el principio",
+  },
 } satisfies Record<string, Record<TUiLanguage, string>>;
 
 export type TUiStringKey = keyof typeof strings;

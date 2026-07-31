@@ -120,7 +120,9 @@ function App() {
         {(!isSession || !isCharacter || !isPremise) && <InstructionView />}
         {isSession && isCharacter && isPremise && <StoryView />}
       </AppShell.Main>
-      <AppShell.Footer p="sm">
+      {/* py=8 leaves 44px of usable height inside the fixed 60px footer, so
+          the author link can meet the 44px touch target. */}
+      <AppShell.Footer px="sm" py={8}>
         <Flex w="100%" h="100%" justify="center" align="center" gap="sm">
           <Box>
             <Text component="span" fw={500} fs="italic" ff="heading">
@@ -133,6 +135,7 @@ function App() {
               replace={false}
               radius="lg"
               size="compact-sm"
+              h={44}
               variant="gradient"
               gradient={{ from: "violet", to: "grape", deg: 90 }}
               c="white"

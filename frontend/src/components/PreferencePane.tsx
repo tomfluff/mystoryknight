@@ -59,6 +59,7 @@ const PreferencePane = () => {
         <Select
           label={t("storyLanguage")}
           description={t("storyLanguageDesc")}
+          size="md"
           radius="md"
           data={storyLanguageOptions}
           value={language}

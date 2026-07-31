@@ -56,6 +56,7 @@ const InstructionView = () => {
               </Text>
               <Button
                 size="md"
+                h={44}
                 onClick={() => newSession.mutate()}
                 loading={newSession.isPending}
                 disabled={session != null}
@@ -81,6 +82,7 @@ const InstructionView = () => {
               </Text>
               <Button
                 size="md"
+                h={44}
                 onClick={openCapture}
                 disabled={session == null || character != null}
               >
@@ -97,6 +99,7 @@ const InstructionView = () => {
               </Text>
               <Button
                 size="md"
+                h={44}
                 onClick={openPremise}
                 disabled={character == null || premise != null}
               >

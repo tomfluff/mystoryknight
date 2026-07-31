@@ -4,6 +4,7 @@ import { useDisclosure, useOs } from "@mantine/hooks";
 import getAxiosInstance from "../utils/axiosInstance";
 import { FaPause, FaPlay } from "react-icons/fa";
 import { FaRotateLeft } from "react-icons/fa6";
+import { useUiStrings } from "../i18n/strings";
 
 type Props = {
   id?: string;
@@ -15,6 +16,7 @@ const ReadController = ({ text, autoPlay }: Props) => {
   const instance = getAxiosInstance();
   const audioRef = useRef<HTMLAudioElement>(new Audio());
   const os = useOs();
+  const t = useUiStrings();
 
   const [playing, { open, close }] = useDisclosure(false, {
     onOpen: () => {
@@ -44,8 +46,12 @@ const ReadController = ({ text, autoPlay }: Props) => {
           variant="filled"
           size="xs"
           radius="xl"
+          /* 44px touch target (DESIGN.md, Interaction). */
+          w={44}
+          h={44}
           onClick={playing ? close : open}
           color={"gray"}
+          aria-label={playing ? t("pauseReading") : t("readAloud")}
         >
           {playing ? <FaPause /> : <FaPlay />}
         </Button>
@@ -54,9 +60,12 @@ const ReadController = ({ text, autoPlay }: Props) => {
           variant="filled"
           size="xs"
           radius="xl"
+          w={44}
+          h={44}
           color="gray"
           disabled={!playing}
           onClick={reset}
+          aria-label={t("restartReading")}
         >
           <FaRotateLeft />
         </Button>

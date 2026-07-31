@@ -92,6 +92,7 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
         <Stack>
           {!click && (
             <Select
+              size="md"
               data={devices.map((device, i) => ({
                 value: device.deviceId,
                 label: device.label || `Camera ${i + 1}`,
@@ -126,6 +127,7 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
                   onClick={handleSend}
                   disabled={uploadImage.isPending}
                   fullWidth
+                  h={44}
                 >
                   {uploadImage.isPending ? (
                     <Loader color="gray" type="dots" size="md" />
@@ -141,6 +143,7 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
                   onClick={handleRetake}
                   disabled={uploadImage.isPending}
                   fullWidth
+                  h={44}
                 >
                   Retake
                 </Button>
@@ -148,7 +151,12 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
             )}
             {!click && (
               <Grid.Col span={12}>
-                <Button onClick={handleCapture} fullWidth disabled={!!cameraError}>
+                <Button
+                  onClick={handleCapture}
+                  fullWidth
+                  h={44}
+                  disabled={!!cameraError}
+                >
                   Capture
                 </Button>
               </Grid.Col>

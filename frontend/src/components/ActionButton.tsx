@@ -35,9 +35,14 @@ const ActionButton = ({ action, handleClick, emphasis }: Props) => {
       )}
       <Button
         size="sm"
+        /* 44px touch target (DESIGN.md, Interaction) -- this is the primary
+           child-facing control. */
+        h={44}
+        /* Logical corners: the flattened edge joins the popover button and
+           must mirror under RTL. */
         style={{
-          borderTopRightRadius: 0,
-          borderBottomRightRadius: 0,
+          borderStartEndRadius: 0,
+          borderEndEndRadius: 0,
         }}
         color={!action.active ? (action.used ? "violet" : "gray") : "violet"}
         onClick={handleClick}
@@ -56,12 +61,14 @@ const ActionButton = ({ action, handleClick, emphasis }: Props) => {
           <Button
             size="sm"
             px="xs"
+            h={44}
+            miw={44}
             color={
               !action.active ? (action.used ? "violet" : "gray") : "violet"
             }
             style={{
-              borderTopLeftRadius: 0,
-              borderBottomLeftRadius: 0,
+              borderStartStartRadius: 0,
+              borderEndStartRadius: 0,
             }}
           >
             <FaEllipsisVertical />

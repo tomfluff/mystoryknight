@@ -48,6 +48,7 @@ const ChatUploadModal = ({ display, handleChat, finalAction }: Props) => {
       <Container>
         <Stack>
           <Select
+            size="md"
             data={characters.map((c) => ({ value: c.name, label: c.name }))}
             value={character}
             onChange={(value) => value && setCharacter(value)}
@@ -72,6 +73,7 @@ const ChatUploadModal = ({ display, handleChat, finalAction }: Props) => {
             onClick={handleSend}
             disabled={!character || !message.trim()}
             fullWidth
+            h={44}
           >
             Say it!
           </Button>
