@@ -117,6 +117,24 @@ const strings = {
     ja: "エキスパート",
     es: "Experto",
   },
+  moreAboutChoice: {
+    en: "More about this choice",
+    he: "עוד על הבחירה הזאת",
+    ja: "このせんたくしについてもっと",
+    es: "Más sobre esta opción",
+  },
+  openMenu: {
+    en: "Open menu",
+    he: "פתיחת התפריט",
+    ja: "メニューをひらく",
+    es: "Abrir el menú",
+  },
+  closeMenu: {
+    en: "Close menu",
+    he: "סגירת התפריט",
+    ja: "メニューをとじる",
+    es: "Cerrar el menú",
+  },
   readAloud: {
     en: "Read aloud",
     he: "הקראה בקול",

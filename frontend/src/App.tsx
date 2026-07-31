@@ -24,9 +24,11 @@ import PreferenceModal from "./components/PreferenceModal/PreferenceModal";
 import { resetPreferences } from "./stores/preferencesStore";
 import AboutModal from "./components/AboutModal/AboutModal";
 import InstructionView from "./components/InstructionView";
+import { useUiStrings } from "./i18n/strings";
 
 function App() {
   const [opened, { toggle: toggleNavbar }] = useDisclosure(false);
+  const t = useUiStrings();
   const sessionId = useSessionStore.use.id();
   const isSession = useMemo(() => sessionId !== null, [sessionId]);
 
@@ -46,6 +48,26 @@ function App() {
   const premise = useAdventureStore.use.premise();
   const isPremise = useMemo(() => premise !== null, [premise]);
 
+  /* Rendered twice (header from `sm` up, navbar below) because
+     visibleFrom/hiddenFrom are CSS-only; defined once so the two spots
+     cannot drift. */
+  const controls = (
+    <>
+      <Button
+        disabled={!isSession}
+        onClick={reset}
+        color="orange.6"
+        autoContrast
+        h={44}
+      >
+        Reset
+      </Button>
+      <AboutModal />
+      <PreferenceModal />
+      <ColorSchemeToggle />
+    </>
+  );
+
   return (
     <AppShell
       header={{ height: 60 }}
@@ -64,42 +86,22 @@ function App() {
             onClick={toggleNavbar}
             hiddenFrom="sm"
             size="sm"
+            /* 44px touch target (DESIGN.md, Interaction); glyph stays size="sm". */
+            w={44}
+            h={44}
+            aria-label={opened ? t("closeMenu") : t("openMenu")}
           />
           <Text size="md">MyStoryKnight.</Text>
           {/* Below `sm` these controls move to the navbar; the fixed 60px
               header cannot fit them next to the burger on small screens. */}
           <Group gap="sm" visibleFrom="sm">
-            <Button
-              disabled={!isSession}
-              onClick={reset}
-              color="orange.6"
-              autoContrast
-              h={44}
-            >
-              Reset
-            </Button>
-            <AboutModal />
-            <PreferenceModal />
-            <ColorSchemeToggle />
+            {controls}
           </Group>
         </Flex>
       </AppShell.Header>
       <AppShell.Navbar p="md">
         <AppShell.Section hiddenFrom="sm">
-          <Group gap="sm">
-            <Button
-              disabled={!isSession}
-              onClick={reset}
-              color="orange.6"
-              autoContrast
-              h={44}
-            >
-              Reset
-            </Button>
-            <AboutModal />
-            <PreferenceModal />
-            <ColorSchemeToggle />
-          </Group>
+          <Group gap="sm">{controls}</Group>
         </AppShell.Section>
         <AppShell.Section
           grow

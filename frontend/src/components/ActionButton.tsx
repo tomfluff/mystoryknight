@@ -3,6 +3,7 @@ import { TAction } from "../types/Story";
 import { FaEllipsisVertical } from "react-icons/fa6";
 import ReadController from "./ReadController";
 import useTranslation from "../hooks/useTranslation";
+import { useUiStrings } from "../i18n/strings";
 import classes from "./ActionButton.module.css";
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
 };
 
 const ActionButton = ({ action, handleClick, emphasis }: Props) => {
+  const t = useUiStrings();
   const { data: shorttext, isLoading: shorttextLoading } = useTranslation(
     action.title
   );
@@ -70,6 +72,7 @@ const ActionButton = ({ action, handleClick, emphasis }: Props) => {
               borderStartStartRadius: 0,
               borderEndStartRadius: 0,
             }}
+            aria-label={t("moreAboutChoice")}
           >
             <FaEllipsisVertical />
           </Button>

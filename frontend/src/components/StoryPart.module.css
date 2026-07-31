@@ -3,7 +3,12 @@
  * "Dark mode"): violet.4 in light, violet.8 in dark, white text in both --
  * components must not re-decide this with inline colorScheme branches.
  */
-.bubble {
+/*
+ * Doubled class: Paper's own background rule has the same (0,1,0) specificity
+ * and later source order, so a bare .bubble loses in the light scheme
+ * (white-on-white text). .bubble.bubble outranks it in both schemes.
+ */
+.bubble.bubble {
   background-color: light-dark(
     var(--mantine-color-violet-4),
     var(--mantine-color-violet-8)
