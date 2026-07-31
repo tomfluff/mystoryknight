@@ -12,13 +12,16 @@ import {
 import { useAdventureStore } from "../stores/adventureStore";
 import { initSession, useSessionStore } from "../stores/sessionStore";
 import getAxiosInstance from "../utils/axiosInstance";
-import { useMutation } from "@tanstack/react-query";
+import { useIsFetching, useMutation } from "@tanstack/react-query";
 import { useDisclosure } from "@mantine/hooks";
 import DrawingUploadModal from "./DrawingUploadModal";
 import PremiseSelectModal from "./PremiseSelectModal";
+import HeroGallery from "./HeroGallery";
+import { useUiStrings } from "../i18n/strings";
 
 const InstructionView = () => {
   const instance = getAxiosInstance();
+  const t = useUiStrings();
   const session = useSessionStore.use.id();
   const character = useAdventureStore.use.character();
   const premise = useAdventureStore.use.premise();
@@ -27,6 +30,11 @@ const InstructionView = () => {
     useDisclosure();
   const [premiseModal, { open: openPremise, close: closePremise }] =
     useDisclosure();
+
+  /* Premise generation starts the moment a character exists -- the modal is
+     mounted but closed, so the whole wait happens out here and used to look
+     like nothing was happening. Read it from the query cache. */
+  const premisesPending = useIsFetching({ queryKey: ["premise"] }) > 0;
 
   const newSession = useMutation({
     mutationKey: ["session"],
@@ -88,6 +96,9 @@ const InstructionView = () => {
               >
                 Capture your Drawing
               </Button>
+              {/* Second route to the same character pipeline, for children
+                  without a camera or a drawing to hand. */}
+              {session != null && character == null && <HeroGallery />}
             </Box>
             <Box
               opacity={
@@ -101,10 +112,16 @@ const InstructionView = () => {
                 size="md"
                 h={44}
                 onClick={openPremise}
+                loading={premisesPending}
                 disabled={character == null || premise != null}
               >
                 Select a Premise
               </Button>
+              {premisesPending && (
+                <Text size="sm" c="dimmed" mt="xs" role="status">
+                  {t("premiseNoteWaiting")}
+                </Text>
+              )}
             </Box>
           </Stack>
         </Paper>

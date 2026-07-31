@@ -91,7 +91,16 @@ function App() {
             h={44}
             aria-label={opened ? t("closeMenu") : t("openMenu")}
           />
-          <Text size="md">MyStoryKnight.</Text>
+          <Group gap={8} wrap="nowrap">
+            <img
+              src={`${import.meta.env.BASE_URL}logo.png`}
+              alt=""
+              width={28}
+              height={28}
+              style={{ objectFit: "contain", display: "block" }}
+            />
+            <Text size="md">MyStoryKnight.</Text>
+          </Group>
           {/* Below `sm` these controls move to the navbar; the fixed 60px
               header cannot fit them next to the burger on small screens. */}
           <Group gap="sm" visibleFrom="sm">

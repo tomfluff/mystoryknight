@@ -1,0 +1,67 @@
+/*
+ * Ready-made hero tiles. Deliberately plain: a bordered card that picks up
+ * Mantine's own surface and radius tokens so the gallery reads as part of the
+ * entry card it sits in, not as a separate visual world.
+ */
+.tile {
+  display: block;
+  padding: var(--mantine-spacing-xs);
+  border: 1px solid light-dark(
+    var(--mantine-color-gray-3),
+    var(--mantine-color-dark-4)
+  );
+  border-radius: var(--mantine-radius-md);
+  background: light-dark(
+    var(--mantine-color-white),
+    var(--mantine-color-dark-6)
+  );
+  transition: border-color 100ms ease, transform 100ms ease;
+  /* 44px minimum touch target (DESIGN.md, Interaction): the primary user is a
+     child on a phone. The image keeps the tile well above this. */
+  min-height: 44px;
+}
+
+.tile:hover:not(:disabled),
+.tile:focus-visible {
+  border-color: var(--mantine-primary-color-filled);
+  transform: translateY(-2px);
+}
+
+.tile:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* The tile being sent keeps full opacity so the child can see which one they
+   picked while the rest dim -- state by position, not by colour alone. */
+.tile[data-picking="true"] {
+  opacity: 1;
+  border-color: var(--mantine-primary-color-filled);
+}
+
+/* The gallery is a secondary route, not the headline: cap it so it stays a
+   compact strip inside the entry card instead of stretching to the card's
+   full width and pushing step 3 off the screen. */
+.grid {
+  max-width: 26rem;
+}
+
+.art {
+  border-radius: var(--mantine-radius-sm);
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.name {
+  margin-top: 6px;
+  line-height: 1.25;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tile:hover:not(:disabled),
+  .tile:focus-visible {
+    transition: none;
+    transform: none;
+  }
+}
