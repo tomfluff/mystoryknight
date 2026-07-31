@@ -475,11 +475,15 @@ Example JSON object:
     ]
 
     def generate_actions(self, context, complexity, n=2):
-        # Draw a different flavor per action, per turn -- without this the model
-        # settles into the same safe explore/talk pair every time.
+        # Flavors keep the pair from collapsing into the same safe
+        # explore/talk every turn. They are a tie-breaker, NOT a requirement:
+        # when they were mandatory the model invented a fitting scene instead
+        # of using the one in front of it, so a knock at the door could be
+        # answered with an unrelated silly stunt. Relevance wins; flavor only
+        # picks between options the scene already affords.
         flavors = random.sample(self.ACTION_FLAVORS, n)
         flavor_lines = "\n".join(
-            f"    - Action {i + 1} must be {f}" for i, f in enumerate(flavors)
+            f"    - Lean action {i + 1} towards {f}" for i, f in enumerate(flavors)
         )
         messages = [
             {
@@ -490,10 +494,14 @@ Example JSON object:
                         "text": """
 You are a great storyteller for children.
 1. Read the input: the premise, the protagonist, the story summary, the recent parts, the entities, and the current phase.
-2. Write exactly %d different actions the main character could take next, one per flavor:
+2. THE LAST ITEM in "recent_parts" is what just happened. Before writing anything, work out what it leaves the hero standing in front of RIGHT NOW: who just spoke or arrived, what was just heard or seen, which door, path, object or creature is within reach, and any question just put to the hero.
+3. Write exactly %d different actions, each one a thing the hero could physically do in that exact moment:
 %s
-3. Each action must:
-    - Be concrete and vivid: name the specific thing the character does, not a generic verb.
+4. Relevance beats flavor. If the scene does not afford an action of a given flavor, write a relevant action instead -- never invent a situation to justify a flavor.
+5. Each action must:
+    - Respond to what is actually there in the last part. If someone knocks, one action opens the door. If a fountain appears, one action drinks from it. If a character asks the hero something, one action answers.
+    - Use only people, places, creatures and objects already present in the story or standing right where the hero is. Never introduce a new prop or place that the story has not mentioned.
+    - Be doable now, from where the hero is standing -- not a plan for later, not a wish, not a feeling.
     - Have a consequence a child can picture -- something changes if you pick it.
     - Fit what this character would plausibly do, given their personality and fears.
     - Move the story towards the premise.
@@ -501,25 +509,30 @@ You are a great storyteller for children.
     - Have a "title" that is a plain instruction to the hero: start with a verb, at most four words, using everyday words a young child knows. For example: "Go to the tunnel", "Ask the frog", "Hide in the log", "Run away", "Open the door".
     - Never make the "title" a name, a label or a clever phrase. It must say what the hero does.
     - Have a "desc" of one sentence, using the protagonist's shortname, saying what they do.
-4. Do not repeat any action listed in "past_actions".
-5. If "phase" is "resolution", the story is nearly over: every action must move toward resolving the premise or an open thread, but keep its flavor.
-6. Never title an action "Ending" or "Motion Capture". Those titles are reserved.
-7. Language level: %s
-8. Keep the content safe and age-appropriate. No violence, gore, or frightening imagery. Risky may mean embarrassing or tricky, never dangerous.
+6. Do not repeat any action listed in "past_actions".
+7. If "phase" is "resolution", the story is nearly over: every action must move toward resolving the premise or an open thread, while still being something the hero can do right now.
+8. Never title an action "Ending" or "Motion Capture". Those titles are reserved.
+9. Language level: %s
+10. Keep the content safe and age-appropriate. No violence, gore, or frightening imagery. Risky may mean embarrassing or tricky, never dangerous.
 
-Example JSON object (flavors BOLD and SILLY):
+Worked example. If the last part ends with a knock at the cottage door while
+Johnny hides under the table, and the entities include "the red door" and
+"Pip the mouse", good actions are grounded in exactly that:
 {
     "list": [
         {
-            "title": "Jump at the shadow",
-            "desc": "Johnny leaps at the moving shadow behind the curtain, even though it might be bigger than him."
+            "title": "Open the red door",
+            "desc": "Johnny takes a big breath, walks out from under the table and pulls the red door open."
         },
         {
-            "title": "Set a tuna trap",
-            "desc": "Johnny balances his last tuna can on the door so whoever sneaks in gets a fishy surprise."
+            "title": "Ask Pip to peek",
+            "desc": "Johnny whispers to Pip the mouse to squeeze under the red door and see who is knocking."
         }
     ]
 }
+Bad actions for that same moment, and why: "Climb the mountain" (no mountain
+is there, and the knocking is ignored), "Feel very brave" (not something the
+hero does), "Build a boat" (invents materials the story never mentioned).
 """
                         % (n, flavor_lines, complexity),
                     }
