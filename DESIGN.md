@@ -13,7 +13,12 @@ when a decision here has a WHY, do not undo it without addressing the WHY.
   (`frontend/src/hooks/useLanguageDirection.ts`) syncs `<html lang>` and text
   direction with the language preference on load and on every change.
 - Layout shell is Mantine `AppShell` (header 60px, footer 60px, navbar 320px,
-  navbar breakpoint `xs`) in `frontend/src/App.tsx`.
+  navbar breakpoint `xs`) in `frontend/src/App.tsx`. The navbar holds only the
+  character/premise cards, so on desktop it stays collapsed until a character
+  exists (`collapsed: { desktop: !isCharacter && !opened }`) — otherwise an
+  empty 320px rail sits beside the entry view. The `!opened` term keeps the
+  xs–sm band working: there the burger is still visible but the navbar counts
+  as "desktop", so the burger must be able to open it.
 - Component-specific styles live in CSS Modules next to the component
   (`ActionButton.module.css` etc.), not in global CSS. Global CSS is a
   body-margin reset only.
@@ -68,16 +73,93 @@ names its scheme pair once, in CSS, never inline in JSX:
   removed from `StoryPart.tsx`. `useMantineColorScheme()` remains only where
   the *logic* needs the scheme (e.g. `ColorSchemeToggle`).
 
+## Entry view: the paper-craft world
+
+The entry view (`InstructionView.tsx` + `InstructionView.module.css`, approved
+mockup `.impeccable/variants/v1r-paper-craft.html`) is a self-contained visual
+world: three torn construction-paper step sheets, worked through in order, on
+a deep-violet craft mat. **The world is scoped to the entry view.** The story
+view remains on the incumbent Mantine violet system documented above;
+extending the paper world into the story view is an open decision — do not
+creep it in piecemeal.
+
+- **Sanctioned hex token block on `.entry`.** Like the sparkle block, this
+  world is out-of-gamut for the Mantine palette on purpose. Its colours are
+  CSS custom properties (`--ground`, `--ink`, `--fibre`, `--poppy`,
+  `--marigold`, `--kingfisher`, `--sky`, `--grass`, `--violet`, ...) declared
+  once, on `.entry`, and only there. Inside the mat, reference the tokens;
+  never mint fresh hex, and never use these tokens outside the entry view.
+- **The mat is a scene, not a themed surface.** Saturated paper and the white
+  fibre tear cores only read against the deep-violet ground, so the mat keeps
+  the same colours in BOTH colour schemes — like a photograph would. Every
+  text/paper pairing inside it is therefore scheme-independent and AA in
+  both. The only `light-dark()` is where the mat meets the app shell: in the
+  light scheme the mat gets a contact shadow so it reads as an object lying
+  on the light page. This is a conscious carve-out from the Dark mode
+  convention, not a violation of it.
+- **Torn-paper primitive.** A sheet is `.paper`: `::before` is the white
+  fibre core, `::after` the coloured sheet, each displaced by its own
+  SVG-turbulence filter (`TearFilters` in `InstructionView.tsx`, referenced
+  as `url(#msk-tear*)`). Per-sheet variables (`--sheet`, `--tf1`, `--tf2`,
+  shadow vars) pick the colourway and tear seeds — vary the seeds between
+  neighbouring sheets so no two tears repeat. If an engine drops the
+  displacement filter (known Safari risk) the sheets fall back to straight
+  rounded edges: layout and contrast must stay filter-independent.
+- **Two-tone dashed focus ring (entry-scoped).** `.entry :focus-visible` is a
+  dark dashed outline (`3px dashed var(--ink)`) over a white halo
+  (`box-shadow: 0 0 0 4px var(--fibre)`): no single ring colour is visible on
+  every paper colour, but ink-on-fibre is. Scoped to `.entry`; everywhere
+  else Mantine's default rings stand.
+- **Display font policy.** `--font-display` is Titan One, `--font-body`
+  Nunito — round, friendly faces; the Latin subsets ship with the entry-view
+  chunk. They hold no Hebrew/Japanese glyphs, so the stacks list self-hosted
+  companions in the same register — Heebo (`he`), M PLUS Rounded 1c (`ja`).
+  Those are heavy (M PLUS's CJK unicode-range set alone is ~450KB of
+  `@font-face` CSS), so each loads as a lazy chunk only when its language is
+  active (`frontend/src/i18n/fonts.ts`, triggered from
+  `useLanguageDirection`). The story view keeps the default Mantine type
+  scale.
+- **Say sticker (TTS affordance).** Every line of entry copy carries a
+  `SaySticker` (`SaySticker.tsx`): a 44px round play/pause sticker hitting
+  the same `/read` endpoint as the story view's `ReadController` — only the
+  shell differs. Only one sticker plays at a time (module-level handle);
+  playing state is colour + glyph (green + pause bars), never colour alone,
+  and under reduced motion the pulse stops but the swap remains.
+- **Hero gallery (the no-camera path).** `HeroGallery.tsx` offers six
+  ready-made drawings (`frontend/public/heroes/hero-1..6.webp`) that feed the
+  exact same `/character` pipeline as a webcam capture: the picked WebP is
+  re-encoded to the same JPEG-data-URL payload `DrawingUploadModal` sends.
+  One pipeline, two entrances — do not fork the character contract for new
+  entry paths.
+- **Motion.** The tape peel on the current sheet is the one authored motion
+  of the view; everything else settles. Under `prefers-reduced-motion` all
+  animation/transition in `.entry` is dropped wholesale, but every state
+  signal keeps a static form (tape presence, check sticker, lock chip, the
+  green pause swap) — same rule as the sparkles.
+
+## Brand mark
+
+- The mark is the generated logo — a knight's helmet reading a violet book —
+  at `frontend/public/logo.png`; `favicon.ico` and `apple-touch-icon.png` are
+  derived from it. Keep the favicon derived from the mark; do not let them
+  drift apart.
+- In the entry masthead the mark sits in a **swappable logo slot**:
+  `.logoArt` is one fixed 46px box (38px below 40em) and the art is
+  `object-fit: contain` (the mark is portrait, 579x835 — never stretch it).
+  Trying a new mark is a one-line `<img>` swap inside the slot; nothing else
+  moves.
+
 ## Typography and headings
 
-- Default Mantine type scale; no custom fonts. Footer wordmark uses
-  `ff="heading"` italic.
+- Default Mantine type scale in the app shell and story view; the entry view
+  carries its own display/body faces (see "Entry view: the paper-craft
+  world"). Footer wordmark uses `ff="heading"` italic.
 - Button labels use `tt="none"`, not `capitalize`: action titles are
   sentence-style instructions, and Title Casing produced "Follow The Red
   Smudge" (`ActionButton.tsx`).
-- **Exactly one `h1` per view.** Entry view: `Title order={1} size="h3"`
-  ("Your Adventure Awaits", `InstructionView.tsx` — visual size decoupled from
-  semantic level). Story view: `VisuallyHidden component="h1"` ("Your story").
+- **Exactly one `h1` per view.** Entry view: a plain `h1` styled by
+  `classes.title` ("Let's make a story together.", `InstructionView.tsx`).
+  Story view: `VisuallyHidden component="h1"` ("Your story").
 - **One visually-hidden `h2` per story part** (`VisuallyHidden component="h2"`
   in `StoryView.tsx`), so a screen-reader user can jump between story parts.
   The app's co-play model depends on reading aloud, so structural navigation
@@ -148,7 +230,9 @@ names its scheme pair once, in CSS, never inline in JSX:
 - Every icon-only control carries an `aria-label` (see `ColorSchemeToggle`,
   `AboutModal`, `PreferenceModal`). No exceptions.
 - Focus: rely on Mantine's default `focus-auto` visible focus rings; do not
-  suppress outlines.
+  suppress outlines. (The entry view substitutes its own two-tone dashed ring
+  — see the paper-craft section. The rule is "always a visible ring", not
+  "always Mantine's ring".)
 - Colour never the sole signal; 44px touch targets; reduced-motion fallback —
   see the sections above.
 
@@ -164,6 +248,9 @@ names its scheme pair once, in CSS, never inline in JSX:
 - UI chrome strings are currently static English; they are being moved to
   `frontend/src/i18n/`. New UI strings should go there rather than being
   hard-coded in components.
+- Entry-view copy lives as keys in `frontend/src/i18n/strings.ts` (all four
+  languages); the per-language display fonts it renders in lazy-load via
+  `frontend/src/i18n/fonts.ts` (see the paper-craft section).
 
 ## Persistence constraint on imagery
 

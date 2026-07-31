@@ -1,0 +1,1005 @@
+/*
+ * Entry view: the "paper craft" world (approved mockup
+ * .impeccable/variants/v1r-paper-craft.html). Construction-paper step sheets
+ * with SVG-turbulence torn edges on a deep-violet craft mat.
+ *
+ * Colour scheme decision (conscious, per DESIGN.md "Dark mode"): the craft mat
+ * is a *scene*, not a themed surface — saturated paper and white fibre tear
+ * cores only read against the deep-violet ground, so the mat keeps the same
+ * colours in BOTH schemes (like a photograph would). Every text/paper pairing
+ * inside the mat is therefore scheme-independent and AA in both. The only
+ * light-dark() is where the mat meets the app shell: in the light scheme the
+ * mat gets a contact shadow so it reads as an object lying on the light page.
+ *
+ * Palette hex is sanctioned here (like the sparkle block in
+ * ActionButton.module.css): this world is out-of-gamut for the Mantine
+ * palette on purpose. Tokens are declared once, on .entry, and only there.
+ */
+
+.entry {
+  --ground: #281a46; /* deep violet craft mat */
+  --ink: #241507; /* warm crayon ink */
+  --fibre: #fff7ea; /* torn-paper fibre core */
+  --poppy: #d93611;
+  --poppy-deep: #b02800; /* error text on fibre (7:1) */
+  --marigold: #ffb020;
+  --kingfisher: #1173c2;
+  --sky: #35a7e8;
+  --grass: #3fa34d;
+  --violet: #7b4fd0;
+  --cream-head: #fff6e9; /* headings on the mat */
+  --lav-body: #d9ccf2; /* body copy on the mat */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Latin faces first (they carry the voice but hold no he/ja glyphs), then
+     the self-hosted non-Latin fallbacks: Heebo for Hebrew, M PLUS Rounded 1c
+     for Japanese — round, friendly faces in the same register. */
+  --font-display: "Titan One", "Nunito", "Heebo", "M PLUS Rounded 1c",
+    -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Nunito", "Heebo", "M PLUS Rounded 1c", -apple-system,
+    "Segoe UI", sans-serif;
+
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--ground);
+  background-image: radial-gradient(120% 90% at 50% 0%, #33235b 0%, var(--ground) 62%);
+  color: var(--fibre);
+  font-family: var(--font-body);
+  line-height: 1.55;
+  padding-block: 0 3.5rem;
+  /* Mat-on-page contact shadow: visible in light scheme, near-none in dark. */
+  box-shadow: light-dark(
+    0 14px 34px rgba(31, 17, 63, 0.35),
+    0 14px 34px rgba(0, 0, 0, 0.25)
+  );
+}
+
+/* two-tone focus ring: white halo + dark dashes — visible on any paper */
+.entry :focus-visible {
+  outline: 3px dashed var(--ink);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 4px var(--fibre) !important;
+  border-radius: 10px;
+}
+
+/* ============ paper grain overlay ============ */
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0.055;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ============ torn paper primitive ============
+   ::before = white fibre core (slightly larger, own tear seed)
+   ::after  = the coloured sheet (its own tear seed)
+   real content sits above both. If an engine drops the displacement filter
+   (the mockup's noted Safari risk) the sheets fall back to straight rounded
+   edges — layout and contrast are filter-independent. */
+.paper {
+  position: relative;
+  z-index: 0;
+}
+.paper::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  z-index: -2;
+  background: var(--fibre);
+  border-radius: 14px;
+  filter: var(--tf1, url(#msk-tearA));
+  box-shadow: 0 var(--shy, 10px) var(--shb, 24px) rgba(14, 7, 28, var(--sha, 0.42));
+  transition: box-shadow 0.45s var(--ease-out);
+}
+.paper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--sheet, var(--marigold));
+  border-radius: 11px;
+  filter: var(--tf2, url(#msk-tearB));
+}
+
+/* ============ masthead + logo lockup ============ */
+.masthead {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 2.4rem 1rem 0;
+}
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding-block: 0.5em;
+  padding-inline: 0.9em 1.15em;
+  transform: rotate(-2deg);
+  --sheet: var(--poppy);
+  --tf1: url(#msk-tearC);
+  --tf2: url(#msk-tearD);
+  --shy: 6px;
+  --shb: 16px;
+  --sha: 0.45;
+}
+/* LOGO SLOT — swappable: one fixed box. To try a generated logo, replace the
+   <EntryLogo /> inside .logoArt with <img src="…" alt=""> at the same size. */
+.logoArt {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: block;
+}
+.logoArt > svg,
+.logoArt > img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* generated mark is portrait (579x835); never stretch it */
+  object-fit: contain;
+}
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.15rem, 1rem + 1vw, 1.5rem);
+  letter-spacing: 0.02em;
+  color: #fff;
+  margin: 0;
+}
+
+/* floating decorative stickers (aria-hidden) */
+.decor {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+.decor svg {
+  display: block;
+  width: 100%;
+}
+.decorStar1 {
+  top: 2.2rem;
+  inset-inline-start: 8%;
+  width: 44px;
+  color: var(--marigold);
+  transform: rotate(-14deg);
+  animation: bob 7s ease-in-out infinite alternate;
+}
+.decorStar2 {
+  top: 6.5rem;
+  inset-inline-end: 7%;
+  width: 30px;
+  color: var(--sky);
+  transform: rotate(11deg);
+  animation: bob 9s ease-in-out infinite alternate-reverse;
+}
+.decorStar3 {
+  top: 14rem;
+  inset-inline-start: 3%;
+  width: 24px;
+  color: var(--grass);
+  transform: rotate(24deg);
+  animation: bob 8s ease-in-out infinite alternate;
+}
+@keyframes bob {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 10px;
+  }
+}
+
+/* ============ intro ============ */
+.intro {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 0.6rem;
+  text-align: center;
+}
+.title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.1rem, 1.4rem + 3.4vw, 3.4rem);
+  line-height: 1.12;
+  letter-spacing: 0.005em;
+  color: var(--cream-head);
+  text-wrap: balance;
+  text-shadow: 0 3px 0 rgba(14, 7, 28, 0.45);
+  margin: 0;
+}
+.lede {
+  margin: 1.1rem auto 0;
+  max-width: 38rem;
+  font-size: clamp(1rem, 0.95rem + 0.35vw, 1.15rem);
+  color: var(--lav-body);
+}
+.lede strong {
+  color: var(--cream-head);
+  font-weight: 800;
+}
+.tryThis {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 1.15rem 0 0;
+  background: var(--fibre);
+  color: var(--ink);
+  border-radius: 14px;
+  padding-block: 0.5rem;
+  padding-inline: 0.5rem 0.95rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  transform: rotate(-1.2deg);
+  box-shadow: 0 5px 12px rgba(14, 7, 28, 0.4);
+  text-align: start;
+}
+
+/* ============ read-aloud sticker (TTS play button) ============ */
+.say {
+  flex: none;
+  width: 44px; /* 44px touch target (DESIGN.md, Interaction) */
+  height: 44px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  background: var(--poppy);
+  color: #fff;
+  border: 3px solid var(--cream-head);
+  cursor: pointer;
+  transform: rotate(-4deg);
+  box-shadow: 0 4px 9px rgba(14, 7, 28, 0.35);
+  transition: transform 0.18s var(--ease-out), background-color 0.25s var(--ease-out);
+}
+.say svg {
+  width: 22px;
+  height: 22px;
+}
+.say:hover {
+  transform: rotate(0deg) translateY(-2px);
+}
+.say:active {
+  transform: translateY(1px);
+}
+/* Playing: colour + pause glyph (swapped in SaySticker.tsx) + pulse; colour
+   is never the sole signal, and under reduced motion the glyph + colour still
+   signal the state (motion removed, information kept). */
+.saying {
+  background: var(--grass);
+  animation: sayPulse 0.9s var(--ease-out) 2;
+}
+@keyframes sayPulse {
+  0% {
+    transform: rotate(-4deg) scale(1);
+  }
+  35% {
+    transform: rotate(-4deg) scale(1.16);
+  }
+  70% {
+    transform: rotate(-4deg) scale(0.98);
+  }
+  100% {
+    transform: rotate(-4deg) scale(1);
+  }
+}
+.sayline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+.sayline > p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+/* ============ the step stack ============ */
+.steps {
+  list-style: none;
+  max-width: 47rem;
+  margin: 2.6rem auto 0;
+  padding: 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.1rem;
+}
+.step {
+  padding: 1.5rem 1.75rem 1.6rem;
+  transform: rotate(var(--rot, 0deg)) scale(var(--s, 1));
+  transition: transform 0.5s var(--ease-out);
+  color: var(--stepink, var(--ink));
+}
+.step[data-state="current"] {
+  transform: rotate(0deg) scale(1);
+  --shy: 16px;
+  --shb: 36px;
+  --sha: 0.5;
+}
+.step[data-state="locked"] {
+  --s: 0.985;
+  --shy: 5px;
+  --shb: 12px;
+  --sha: 0.28;
+}
+.step[data-state="done"] {
+  transform: rotate(calc(var(--rot, 0deg) * 1.7)) scale(0.99);
+  --shy: 7px;
+  --shb: 16px;
+  --sha: 0.32;
+}
+
+/* header row of a sheet */
+.stepHead {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  position: relative;
+  z-index: 1;
+}
+.stepHeadText {
+  flex: 1;
+  min-width: 0;
+}
+.stepTitle {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.25rem, 1.1rem + 0.8vw, 1.6rem);
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+.num {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  color: var(--numc, var(--poppy));
+  border: 3px solid var(--numc, var(--poppy));
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  transform: rotate(-5deg);
+  box-shadow: 0 3px 7px rgba(14, 7, 28, 0.3);
+}
+
+/* done summary + check sticker */
+.summary {
+  display: none;
+  font-weight: 700;
+  font-size: 0.98rem;
+  margin: 0.15rem 0 0;
+}
+.step[data-state="done"] .summary {
+  display: block;
+}
+.check {
+  flex: none;
+  display: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #2f8f3c;
+  border: 3px solid #fff;
+  place-items: center;
+  box-shadow: 0 4px 9px rgba(14, 7, 28, 0.35);
+  transform: rotate(6deg);
+}
+.check svg {
+  width: 24px;
+  height: 24px;
+}
+.step[data-state="done"] .check {
+  display: grid;
+}
+
+/* lock chip */
+.lockChip {
+  flex: none;
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--fibre);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font-weight: 800;
+  font-size: 0.86rem;
+  white-space: nowrap;
+  transform: rotate(1.5deg);
+  box-shadow: 0 2px 6px rgba(14, 7, 28, 0.3);
+}
+.lockChip svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.step[data-state="locked"] .lockChip {
+  display: inline-flex;
+}
+
+/* "do this one" pointer sticker */
+.nowTag {
+  display: none;
+  position: absolute;
+  inset-block-start: -16px;
+  inset-inline-end: 22px;
+  z-index: 2;
+  background: var(--poppy);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.88rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 11px;
+  border: 2.5px solid var(--cream-head);
+  transform: rotate(3deg);
+  box-shadow: 0 4px 9px rgba(14, 7, 28, 0.4);
+}
+.step[data-state="current"] .nowTag {
+  display: block;
+}
+
+/* masking tape on locked sheets */
+.tape {
+  position: absolute;
+  z-index: 2;
+  width: 112px;
+  height: 30px;
+  background: rgba(255, 248, 235, 0.5);
+  clip-path: polygon(
+    3% 0,
+    97% 4%,
+    100% 22%,
+    97% 46%,
+    100% 74%,
+    96% 100%,
+    4% 96%,
+    0 70%,
+    3% 44%,
+    0 20%
+  );
+  opacity: 1;
+  transition: opacity 0.4s var(--ease-out), transform 0.5s var(--ease-out);
+}
+.tapeA {
+  inset-block-start: -13px;
+  inset-inline-start: -26px;
+  transform: rotate(-32deg);
+}
+.tapeB {
+  inset-block-end: -12px;
+  inset-inline-end: -24px;
+  transform: rotate(-28deg);
+}
+.step[data-state="current"] .tape,
+.step[data-state="done"] .tape {
+  opacity: 0;
+  pointer-events: none;
+}
+/* the peel: the one authored motion of the view */
+.step[data-state="current"] .tapeA {
+  transform: rotate(-52deg) translate(-18px, -14px);
+}
+.step[data-state="current"] .tapeB {
+  transform: rotate(-8deg);
+}
+
+/* collapsing body — expanded only on the current sheet */
+.bodyWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.55s var(--ease-out);
+}
+.step[data-state="current"] .bodyWrap {
+  grid-template-rows: 1fr;
+  transition-delay: 0.22s;
+}
+.body {
+  overflow: hidden;
+  min-height: 0;
+  visibility: hidden;
+  transition: visibility 0.55s;
+}
+.step[data-state="current"] .body {
+  visibility: visible;
+  transition-delay: 0.22s;
+}
+.bodyInner {
+  padding-block-start: 1.1rem;
+}
+.body .sayline > p {
+  max-width: 32rem;
+}
+.note {
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin: 0.8rem 0 0;
+  color: var(--subink, #5c3a00);
+}
+/* Error chip: fibre ground so the red stays AA on any sheet colour. */
+.errorNote {
+  display: inline-block;
+  margin: 0.8rem 0 0;
+  background: var(--fibre);
+  color: var(--poppy-deep);
+  font-weight: 800;
+  font-size: 0.92rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(14, 7, 28, 0.3);
+}
+
+/* per-sheet colourways */
+.stepOne {
+  --sheet: var(--marigold);
+  --tf1: url(#msk-tearA);
+  --tf2: url(#msk-tearB);
+  --rot: -1.1deg;
+  --stepink: var(--ink);
+  --subink: #5c3a00;
+  --numc: var(--poppy);
+}
+.stepTwo {
+  --sheet: var(--grass);
+  --tf1: url(#msk-tearC);
+  --tf2: url(#msk-tearE);
+  --rot: 1.2deg;
+  --stepink: var(--ink);
+  --subink: #0c2a10;
+  --numc: var(--kingfisher);
+}
+.stepThree {
+  --sheet: var(--violet);
+  --tf1: url(#msk-tearB);
+  --tf2: url(#msk-tearD);
+  --rot: -0.9deg;
+  --stepink: #fff;
+  --subink: #f1e9ff;
+  --numc: var(--violet);
+}
+.stepThree .num {
+  border-color: var(--marigold);
+  color: #8348d8;
+}
+.stepThree .note {
+  color: #f1e9ff;
+}
+
+/* ============ sticker buttons ============ */
+.stickerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 50px;
+  padding: 0.72rem 1.45rem;
+  background: var(--btn, var(--poppy));
+  color: #fff;
+  border: 3px solid var(--cream-head);
+  border-radius: 15px;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 1.12rem;
+  cursor: pointer;
+  transform: rotate(-0.6deg);
+  box-shadow: 0 6px 14px rgba(14, 7, 28, 0.38);
+  transition: transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out);
+  margin-block-start: 1rem;
+}
+.stickerBtn svg {
+  width: 21px;
+  height: 21px;
+  flex: none;
+}
+.stickerBtn:hover {
+  transform: rotate(0.4deg) translateY(-3px);
+  box-shadow: 0 10px 20px rgba(14, 7, 28, 0.42);
+}
+.stickerBtn:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 8px rgba(14, 7, 28, 0.4);
+}
+.stickerBtn:disabled {
+  cursor: default;
+  opacity: 0.75;
+  transform: none;
+  box-shadow: 0 3px 8px rgba(14, 7, 28, 0.3);
+}
+.camBtn {
+  --btn: var(--kingfisher);
+}
+.spin {
+  animation: spin 1.3s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============ hero gallery ============ */
+.orLine {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 1.6rem 0 0.2rem;
+}
+.orLine::before,
+.orLine::after {
+  content: "";
+  flex: 1;
+  border-block-start: 3px dashed rgba(36, 21, 7, 0.45);
+}
+.orTitle {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.12rem;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+.orTitle svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.galleryTip {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0.35rem 0 0;
+  color: var(--subink);
+}
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.9rem;
+  margin-block-start: 1rem;
+}
+.heroTile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 4px solid #fff;
+  border-radius: 17px;
+  padding: 0;
+  overflow: visible;
+  cursor: pointer;
+  box-shadow: 0 5px 12px rgba(14, 7, 28, 0.32);
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out);
+  font: inherit;
+  color: var(--ink);
+  min-height: 44px;
+}
+.heroTile:nth-child(odd) {
+  --tilt: -1.4deg;
+}
+.heroTile:nth-child(even) {
+  --tilt: 1.2deg;
+}
+.heroTile:hover,
+.heroTile:focus-visible {
+  transform: rotate(calc(var(--tilt, 0deg) - 2.4deg)) translateY(-7px) scale(1.045);
+  box-shadow: 0 13px 24px rgba(14, 7, 28, 0.4);
+  z-index: 3;
+}
+.heroTile:active {
+  transform: rotate(var(--tilt)) translateY(0) scale(0.99);
+}
+.heroTile:disabled {
+  cursor: default;
+  opacity: 0.65;
+  transform: rotate(var(--tilt, 0deg));
+  box-shadow: 0 5px 12px rgba(14, 7, 28, 0.32);
+}
+.heroTileArt {
+  display: block;
+  border-start-start-radius: 12px;
+  border-start-end-radius: 12px;
+  overflow: hidden;
+  background: #fbf6ec;
+}
+.heroTileArt img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+.heroTileName {
+  display: block;
+  padding: 0.5rem 0.4rem 0.55rem;
+  font-weight: 800;
+  font-size: 0.92rem;
+  text-align: center;
+  line-height: 1.2;
+}
+/* pending badge on the tile being sent (spinning star) */
+.heroTileBadge {
+  position: absolute;
+  inset-block-start: -12px;
+  inset-inline-end: -10px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--kingfisher);
+  border: 3px solid #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 3px 7px rgba(14, 7, 28, 0.35);
+}
+.heroTileBadge svg {
+  width: 19px;
+  height: 19px;
+}
+.heroTile:disabled .heroTileArt img {
+  filter: saturate(0.75);
+}
+
+/* ============ section headings on the mat ============ */
+.steer {
+  max-width: 47rem;
+  margin: 4rem auto 0;
+  padding: 0 1.25rem;
+  text-align: center;
+}
+.matH2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.6rem, 1.2rem + 1.8vw, 2.3rem);
+  line-height: 1.15;
+  letter-spacing: 0.005em;
+  color: var(--cream-head);
+  text-wrap: balance;
+  text-shadow: 0 3px 0 rgba(14, 7, 28, 0.45);
+  margin: 0;
+}
+.matLede {
+  color: var(--lav-body);
+  max-width: 37rem;
+  margin: 0.8rem auto 0;
+}
+.matLede strong {
+  color: var(--cream-head);
+}
+
+/* ============ "you choose" teaser ============ */
+.steerBoard {
+  margin-block-start: 2rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+}
+.moment {
+  --sheet: var(--fibre);
+  --tf1: url(#msk-tearD);
+  --tf2: url(#msk-tearA);
+  --shy: 8px;
+  --shb: 18px;
+  --sha: 0.4;
+  color: var(--ink);
+  max-width: 27rem;
+  padding: 1rem 1.25rem;
+  transform: rotate(-1deg);
+  font-weight: 700;
+  text-align: start;
+}
+.split {
+  width: 190px;
+  height: 38px;
+  margin: 0.55rem 0 0.2rem;
+}
+.branch {
+  width: 100%;
+  max-width: 37rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.1rem;
+}
+.fork {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.95rem 1.15rem;
+  font-weight: 800;
+  text-align: start;
+  line-height: 1.3;
+  transform: rotate(var(--tilt, 0deg));
+}
+.fork svg {
+  flex: none;
+  width: 26px;
+  height: 26px;
+}
+/* The fork arrow points "onward" in reading direction; directional doodles
+   must mirror under RTL (DESIGN.md, RTL and language direction). */
+[dir="rtl"] .fork svg {
+  transform: scaleX(-1);
+}
+.forkA {
+  --sheet: var(--sky);
+  --tf1: url(#msk-tearB);
+  --tf2: url(#msk-tearE);
+  --tilt: -1.6deg;
+  color: var(--ink);
+}
+.forkB {
+  --sheet: var(--marigold);
+  --tf1: url(#msk-tearE);
+  --tf2: url(#msk-tearC);
+  --tilt: 1.4deg;
+  color: var(--ink);
+}
+.steerCap {
+  margin: 1.1rem 0 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--lav-body);
+}
+.steerRow {
+  margin: 2rem auto 0;
+  max-width: 40rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+.chatScrap {
+  --sheet: var(--violet);
+  --tf1: url(#msk-tearC);
+  --tf2: url(#msk-tearB);
+  --shy: 7px;
+  --shb: 16px;
+  --sha: 0.4;
+  color: #fff;
+  max-width: 20rem;
+  padding: 1rem 1.2rem 1.1rem;
+  transform: rotate(1.2deg);
+  text-align: start;
+}
+.chatLabel {
+  font-weight: 800;
+  font-size: 0.95rem;
+  margin: 0;
+}
+.chatMsg {
+  margin: 0.65rem 0 0;
+  background: #fff;
+  color: var(--ink);
+  border-start-start-radius: 13px;
+  border-start-end-radius: 13px;
+  border-end-end-radius: 3px;
+  border-end-start-radius: 13px;
+  padding: 0.45rem 0.8rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  width: fit-content;
+  margin-inline-start: auto;
+  box-shadow: 0 3px 7px rgba(14, 7, 28, 0.3);
+}
+.chatReply {
+  margin: 0.5rem 0 0;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #f1e9ff;
+}
+.endWrap {
+  max-width: 15rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+}
+.endSticker {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--poppy);
+  color: #fff;
+  border: 4px solid var(--cream-head);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: 1.05;
+  text-align: center;
+  transform: rotate(5deg);
+  box-shadow: 0 6px 14px rgba(14, 7, 28, 0.42);
+}
+.endCap {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--lav-body);
+  margin: 0;
+}
+
+/* ============ responsive ============ */
+@media (max-width: 40em) {
+  .masthead {
+    padding-block-start: 1.6rem;
+  }
+  .intro {
+    padding-block-start: 1.5rem;
+  }
+  .steps,
+  .steer {
+    padding-inline: 0.9rem;
+  }
+  .step {
+    padding: 1.15rem 1.1rem 1.25rem;
+  }
+  .gallery {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  .decorStar3 {
+    display: none;
+  }
+  .lockChip {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.7rem;
+  }
+  .stepHead {
+    gap: 0.7rem;
+  }
+  .num {
+    width: 42px;
+    height: 42px;
+    font-size: 1.25rem;
+  }
+  .tapeA {
+    inset-inline-start: -18px;
+  }
+  .tapeB {
+    inset-inline-end: -16px;
+  }
+  .logoArt {
+    width: 38px;
+    height: 38px;
+  }
+}
+@media (max-width: 35em) {
+  .branch {
+    grid-template-columns: 1fr;
+    max-width: 24rem;
+  }
+  .split {
+    display: none;
+  }
+  .steerRow {
+    gap: 1.6rem;
+  }
+}
+@media (max-width: 26.25em) {
+  /* icon-only chip on tiny screens; the state is still announced by the
+     step's aria-current and lock text lives in the chip's title */
+  .lockChip span {
+    display: none;
+  }
+  .lockChip {
+    padding: 0.45rem;
+  }
+}
+
+/* ============ reduced motion: keep signals, drop motion ============
+   Tape, checks, lock chips and the green "saying" swap all remain as static
+   signals (DESIGN.md: reduce the motion, not the information). */
+@media (prefers-reduced-motion: reduce) {
+  .entry *,
+  .entry *::before,
+  .entry *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .decor {
+    translate: none;
+  }
+}

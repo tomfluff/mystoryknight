@@ -75,7 +75,12 @@ function App() {
       navbar={{
         width: 320,
         breakpoint: "xs",
-        collapsed: { mobile: !opened },
+        /* Desktop: the navbar only holds character/premise cards, so it stays
+           collapsed until a character exists — no empty 320px rail beside the
+           entry screen. `!opened` keeps the xs–sm band working: there the
+           burger is still visible but the navbar counts as "desktop", so the
+           burger must be able to open it. Mobile key is unchanged. */
+        collapsed: { mobile: !opened, desktop: !isCharacter && !opened },
       }}
       padding="sm"
     >
