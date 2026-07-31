@@ -16,6 +16,7 @@ import { useMutation } from "@tanstack/react-query";
 import getAxiosInstance from "../utils/axiosInstance";
 import { setCharacter } from "../stores/adventureStore";
 import { createCallContext } from "../utils/llmIntegration";
+import { useUiStrings } from "../i18n/strings";
 
 // Lazy: react-webcam only loads when the capture modal actually renders the
 // camera, keeping it out of the initial bundle.
@@ -42,7 +43,8 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
   } = useWebcam(true);
   const [click, { toggle: toggleClick }] = useDisclosure(false);
   const instance = getAxiosInstance();
-  const isMobile = useMediaQuery("(max-width: 50em)");
+  const t = useUiStrings();
+  const isMobile = useMediaQuery("(max-width: 48em)");
 
   const uploadImage = useMutation({
     mutationKey: ["webcam"],
@@ -81,7 +83,7 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
       size="lg"
       opened={display}
       onClose={finalAction}
-      title="Capture Drawing"
+      title={t("captureDrawingTitle")}
       centered
       fullScreen={isMobile}
       closeOnEscape={!uploadImage.isPending}
@@ -95,18 +97,20 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
               size="md"
               data={devices.map((device, i) => ({
                 value: device.deviceId,
-                label: device.label || `Camera ${i + 1}`,
+                label: device.label || `${t("camera")} ${i + 1}`,
               }))}
               value={deviceId}
               onChange={(value) => value && setDeviceId(value)}
               placeholder={
-                devices.length === 0 ? "Detecting cameras…" : "Select camera"
+                devices.length === 0
+                  ? t("detectingCameras")
+                  : t("selectCamera")
               }
               allowDeselect={false}
               disabled={devices.length === 0}
             />
           )}
-          {!click && cameraError && <Text c="red">{cameraError}</Text>}
+          {!click && cameraError && <Text c="red">{t(cameraError)}</Text>}
           {!click && !cameraError && (
             <Suspense fallback={<Loader />}>
               <Webcam
@@ -118,7 +122,7 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
             </Suspense>
           )}
           {click && base64Capture && (
-            <Image src={base64Capture} alt="placeholder" />
+            <Image src={base64Capture} alt={t("capturedDrawingAlt")} />
           )}
           <Grid>
             {click && (
@@ -132,7 +136,7 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
                   {uploadImage.isPending ? (
                     <Loader color="gray" type="dots" size="md" />
                   ) : (
-                    "Send"
+                    t("send")
                   )}
                 </Button>
               </Grid.Col>
@@ -145,7 +149,7 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
                   fullWidth
                   h={44}
                 >
-                  Retake
+                  {t("retake")}
                 </Button>
               </Grid.Col>
             )}
@@ -157,14 +161,12 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
                   h={44}
                   disabled={!!cameraError}
                 >
-                  Capture
+                  {t("capture")}
                 </Button>
               </Grid.Col>
             )}
           </Grid>
-          {uploadImage.isError && (
-            <Text c="red">{uploadImage.error.message}</Text>
-          )}
+          {uploadImage.isError && <Text c="red">{t("uploadFailed")}</Text>}
         </Stack>
       </Container>
     </Modal>

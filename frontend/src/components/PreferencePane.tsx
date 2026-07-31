@@ -69,7 +69,11 @@ const PreferencePane = () => {
           }}
         />
         <Divider />
+        {/* size="xl" on switches and the enlarged slider thumb keep these
+            controls at the 44px touch-target floor (DESIGN.md): the operator
+            is often a child on a phone. */}
         <Switch
+          size="xl"
           checked={autoReadStorySections}
           onChange={(e) => {
             setPreferences({ autoReadStorySections: e.currentTarget.checked });
@@ -81,6 +85,7 @@ const PreferencePane = () => {
         />
 
         <Switch
+          size="xl"
           checked={includeStoryImages}
           onChange={(e) => {
             setPreferences({ includeStoryImages: e.currentTarget.checked });
@@ -94,6 +99,8 @@ const PreferencePane = () => {
         <Box>
           <Text size="sm">{t("storyComplexity")}</Text>
           <Slider
+            size="lg"
+            thumbSize={32}
             marks={storyComplexityOptions}
             label={null}
             value={storyComplexity}

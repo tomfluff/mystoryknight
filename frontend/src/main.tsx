@@ -12,6 +12,9 @@ import { useLanguageDirection } from "./hooks/useLanguageDirection.ts";
 
 const theme = createTheme({
   primaryColor: "violet",
+  // Mantine transitions (modal pop/fade etc.) are pure motion, no
+  // information -- skip them for prefers-reduced-motion users.
+  respectReducedMotion: true,
 });
 
 // Syncs <html dir>/<html lang> with the language preference (RTL for Hebrew).

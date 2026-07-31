@@ -7,7 +7,9 @@ import {
   Textarea,
 } from "@mantine/core";
 import { useState } from "react";
+import { useMediaQuery } from "@mantine/hooks";
 import { useAdventureStore } from "../stores/adventureStore";
+import { useUiStrings } from "../i18n/strings";
 
 type Props = {
   display: boolean;
@@ -22,6 +24,8 @@ type Props = {
  * arrives woven into the next story part -- no separate chat endpoint.
  */
 const ChatUploadModal = ({ display, handleChat, finalAction }: Props) => {
+  const t = useUiStrings();
+  const isMobile = useMediaQuery("(max-width: 48em)");
   const [character, setCharacter] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
@@ -42,8 +46,9 @@ const ChatUploadModal = ({ display, handleChat, finalAction }: Props) => {
       opened={display}
       onClose={finalAction}
       size="lg"
-      title="Chat with..."
+      title={t("chatWithTitle")}
       centered
+      fullScreen={isMobile}
     >
       <Container>
         <Stack>
@@ -53,9 +58,7 @@ const ChatUploadModal = ({ display, handleChat, finalAction }: Props) => {
             value={character}
             onChange={(value) => value && setCharacter(value)}
             placeholder={
-              characters.length === 0
-                ? "No one else is in the story yet"
-                : "Who do you want to talk to?"
+              characters.length === 0 ? t("noOneToTalkTo") : t("whoToTalkTo")
             }
             disabled={characters.length === 0}
             allowDeselect={false}
@@ -63,7 +66,7 @@ const ChatUploadModal = ({ display, handleChat, finalAction }: Props) => {
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.currentTarget.value)}
-            placeholder="What do you want to say?"
+            placeholder={t("whatToSay")}
             autosize
             minRows={2}
             maxRows={4}
@@ -75,7 +78,7 @@ const ChatUploadModal = ({ display, handleChat, finalAction }: Props) => {
             fullWidth
             h={44}
           >
-            Say it!
+            {t("sayIt")}
           </Button>
         </Stack>
       </Container>

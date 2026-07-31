@@ -1,13 +1,21 @@
 import getAxiosInstance from "../utils/axiosInstance";
 import { useMediaQuery } from "@mantine/hooks";
-import { Accordion, Container, Modal, Center, Loader } from "@mantine/core";
+import {
+  Accordion,
+  Button,
+  Container,
+  Modal,
+  Loader,
+  Stack,
+  Text,
+} from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { TCharacter } from "../types/Character";
-import { FaPlus } from "react-icons/fa";
 import { setPremise } from "../stores/adventureStore";
 import { TPremise } from "../types/Premise";
 import PremiseAccordionItem from "./PremiseAccordionItem";
 import { createCallContext } from "../utils/llmIntegration";
+import { useUiStrings } from "../i18n/strings";
 
 type Props = {
   display: boolean;
@@ -17,9 +25,15 @@ type Props = {
 
 const PremiseSelectModal = ({ character, display, finalAction }: Props) => {
   const instance = getAxiosInstance();
-  const isMobile = useMediaQuery("(max-width: 50em)");
+  const t = useUiStrings();
+  const isMobile = useMediaQuery("(max-width: 48em)");
 
-  const { data: premiseList, isLoading } = useQuery({
+  const {
+    data: premiseList,
+    isFetching,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ["premise", character?.fullname],
     queryFn: ({ signal }) => {
       return instance
@@ -44,21 +58,33 @@ const PremiseSelectModal = ({ character, display, finalAction }: Props) => {
       size="lg"
       opened={display}
       onClose={finalAction}
-      title="Select Story Premise"
+      title={t("premiseTitle")}
       centered
       fullScreen={isMobile}
-      closeOnEscape={!isLoading}
-      withCloseButton={!isLoading}
-      closeOnClickOutside={!isLoading}
     >
       <Container>
-        {isLoading && (
-          <Center>
+        {/* A read-only fetch: closing loses nothing, so exits stay enabled. */}
+        {isFetching && (
+          <Stack align="center">
             <Loader color="gray" type="dots" size="lg" />
-          </Center>
+            <Text>{t("premiseLoading")}</Text>
+          </Stack>
         )}
-        {premiseList && premiseList.length > 0 && (
-          <Accordion chevron={<FaPlus />}>
+        {!isFetching && (isError || premiseList?.length === 0) && (
+          <Stack align="center">
+            <Text c="red">{t("premiseFailed")}</Text>
+            <Button
+              variant="light"
+              color="red"
+              h={44}
+              onClick={() => refetch()}
+            >
+              {t("tryAgain")}
+            </Button>
+          </Stack>
+        )}
+        {!isFetching && !isError && premiseList && premiseList.length > 0 && (
+          <Accordion>
             {premiseList.map((premise: TPremise, index: number) => {
               return (
                 <PremiseAccordionItem

@@ -10,16 +10,18 @@ import {
 } from "@mantine/core";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { FaInfo } from "react-icons/fa";
+import { useUiStrings } from "../../i18n/strings";
 
 const AboutModal = () => {
   const [opened, { toggle: toggleOpened }] = useDisclosure(false);
-  const isMobile = useMediaQuery("(max-width: 50em)");
+  const t = useUiStrings();
+  const isMobile = useMediaQuery("(max-width: 48em)");
   return (
     <>
       <ActionIcon
         variant="default"
         size="xl"
-        aria-label="About MyStoryKnight."
+        aria-label={t("openAbout")}
         onClick={toggleOpened}
       >
         <FaInfo />
@@ -29,26 +31,20 @@ const AboutModal = () => {
         opened={opened}
         fullScreen={isMobile}
         centered
-        title="About This Project"
+        title={t("aboutTitle")}
         onClose={toggleOpened}
       >
         <Stack gap="sm">
-          <Title order={1} fs="italic">
+          {/* order={2}: the underlying view already has the one h1; size keeps
+              the h1 visual. */}
+          <Title order={2} size="h1" fs="italic">
             MyStoryKnight.
           </Title>
-          <Text>
-            MyStoryKnight is a storytelling game for children. Draw a character
-            and it becomes the hero of an illustrated adventure, one part at a
-            time.
-          </Text>
-          <Text>
-            You decide what happens next at every turn, so no two stories end up
-            the same. Everything can be read aloud, which makes it as good to
-            play beside someone as on your own.
-          </Text>
+          <Text>{t("aboutBody1")}</Text>
+          <Text>{t("aboutBody2")}</Text>
           <Divider />
           <Box>
-            <Text fz="md">Credits</Text>
+            <Text fz="md">{t("credits")}</Text>
             <Text fz="sm">
               Icons made by <i>Icon.doit</i>, <i>Smashicons</i> and{" "}
               <i>Freepik</i> from{" "}
@@ -61,7 +57,7 @@ const AboutModal = () => {
           {/* The AGPL asks a network-served copy to offer its users the source,
               so the link belongs in the app and not only in the README. */}
           <Box>
-            <Text fz="md">License</Text>
+            <Text fz="md">{t("license")}</Text>
             <Text fz="sm">
               Copyright &copy; 2026 Yotam Sechayk. MyStoryKnight is free
               software, licensed under the{" "}

@@ -2,17 +2,19 @@ import { ActionIcon, Modal } from "@mantine/core";
 import PreferencePane from "../PreferencePane";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { FaCog } from "react-icons/fa";
+import { useUiStrings } from "../../i18n/strings";
 
 const PreferenceModal = () => {
   const [opened, { toggle: toggleOpened }] = useDisclosure(false);
-  const isMobile = useMediaQuery("(max-width: 50em)");
+  const t = useUiStrings();
+  const isMobile = useMediaQuery("(max-width: 48em)");
 
   return (
     <>
       <ActionIcon
         variant="default"
         size="xl"
-        aria-label="Open preference"
+        aria-label={t("openPreferences")}
         onClick={toggleOpened}
       >
         <FaCog />
@@ -22,7 +24,7 @@ const PreferenceModal = () => {
         opened={opened}
         fullScreen={isMobile}
         centered
-        title="Application Preferences"
+        title={t("preferencesTitle")}
         onClose={toggleOpened}
       >
         <PreferencePane />

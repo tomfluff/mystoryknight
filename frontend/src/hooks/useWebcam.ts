@@ -10,6 +10,7 @@
  */
 import { useCallback, useMemo, useRef, useState } from "react";
 import type Webcam from "react-webcam";
+import type { TUiStringKey } from "../i18n/strings";
 
 // `preferBack`: on phones, default to the rear camera (photographing a drawing)
 // rather than the selfie camera. Desktop labels never match, so it is a no-op there.
@@ -20,16 +21,18 @@ const useWebcam = (preferBack = false) => {
   const [deviceId, setDeviceId] = useState<string | null>(null);
   // Without this a blocked or missing camera leaves the modal showing
   // "Detecting cameras..." over a black void forever, with no explanation.
-  const [cameraError, setCameraError] = useState<string | null>(null);
+  // Stored as an i18n key so the consuming component renders it in the
+  // preferred language via useUiStrings.
+  const [cameraError, setCameraError] = useState<TUiStringKey | null>(null);
 
   const handleUserMediaError = useCallback((err: string | DOMException) => {
     const name = typeof err === "string" ? err : err.name;
     setCameraError(
       name === "NotAllowedError"
-        ? "Camera access was blocked. Allow the camera in your browser, then reopen this window."
+        ? "cameraBlocked"
         : name === "NotFoundError" || name === "OverconstrainedError"
-        ? "No camera found. Connect a camera and reopen this window."
-        : "The camera could not be started. Check that no other app is using it."
+        ? "cameraNotFound"
+        : "cameraFailed"
     );
   }, []);
 
