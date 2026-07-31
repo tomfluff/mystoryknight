@@ -3,6 +3,10 @@
  * sky paper scrap pinned under the hero card — "Your beginning" label, the
  * premise title in the display voice, the description, say controls. Sits on
  * the navbar's mat swatch (App.module.css .navMat).
+ *
+ * Tilt budget (paper.module.css): nothing here is taped on, so the card sits
+ * square and shares its left/right edges and its padding with the hero card
+ * above it. Spacing is the --sp-* scale.
  */
 
 .card {
@@ -14,8 +18,7 @@
   --shb: 15px;
   --sha: 0.38;
   color: var(--ink);
-  padding: 0.85rem 1.1rem 0.95rem;
-  transform: rotate(1.1deg);
+  padding: var(--sp-4);
 }
 
 /* deep-sea ink: the mockup's tint darkened one step — #123a52 measured
@@ -31,17 +34,17 @@
   font-family: var(--font-display);
   font-weight: 400;
   font-size: 1.05rem;
-  margin: 0.15rem 0 0;
+  margin: var(--sp-1) 0 0;
 }
 
 .body {
-  margin: 0.35rem 0 0;
+  margin: var(--sp-2) 0 0;
   font-size: 0.92rem;
   font-weight: 600;
 }
 
 .controls {
-  margin-block-start: 0.7rem;
+  margin-block-start: var(--sp-3);
 }
 
 /* Mantine's default violet anchor fails contrast on sky paper; tint it from

@@ -7,7 +7,6 @@ import {
   Modal,
   Loader,
   Stack,
-  Text,
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { TCharacter } from "../types/Character";
@@ -16,6 +15,8 @@ import { TPremise } from "../types/Premise";
 import PremiseAccordionItem from "./PremiseAccordionItem";
 import { createCallContext } from "../utils/llmIntegration";
 import { useUiStrings } from "../i18n/strings";
+import paper from "./paperChrome.module.css";
+import world from "./paper.module.css";
 
 type Props = {
   display: boolean;
@@ -61,30 +62,44 @@ const PremiseSelectModal = ({ character, display, finalAction }: Props) => {
       title={t("premiseTitle")}
       centered
       fullScreen={isMobile}
+      closeButtonProps={{ "aria-label": t("closeWindow") }}
+      classNames={{
+        overlay: paper.overlay,
+        // Violet, like the entry view's step-three sheet this modal opens
+        // from; the premises themselves are the coloured scraps on top.
+        content: `${paper.content} ${paper.sheetViolet}`,
+        header: paper.header,
+        title: paper.title,
+        body: paper.body,
+        close: paper.close,
+      }}
     >
       <Container>
         {/* A read-only fetch: closing loses nothing, so exits stay enabled. */}
         {isFetching && (
           <Stack align="center">
-            <Loader color="gray" type="dots" size="lg" />
-            <Text>{t("premiseLoading")}</Text>
+            <Loader className={paper.loaderCream} type="dots" size="lg" />
+            {/* Plain <p>s: the world's status/error paint their own colour,
+                and a Mantine Text would layer --text-color back over it. */}
+            <p className={paper.status}>{t("premiseLoading")}</p>
           </Stack>
         )}
         {!isFetching && (isError || premiseList?.length === 0) && (
           <Stack align="center">
-            <Text c="red">{t("premiseFailed")}</Text>
+            <p className={world.errorChip} role="alert">
+              {t("premiseFailed")}
+            </p>
             <Button
-              variant="light"
-              color="red"
               h={44}
               onClick={() => refetch()}
+              classNames={{ root: paper.retryBtn }}
             >
               {t("tryAgain")}
             </Button>
           </Stack>
         )}
         {!isFetching && !isError && premiseList && premiseList.length > 0 && (
-          <Accordion>
+          <Accordion classNames={{ root: paper.accRoot }}>
             {premiseList.map((premise: TPremise, index: number) => {
               return (
                 <PremiseAccordionItem

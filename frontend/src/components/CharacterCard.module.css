@@ -3,6 +3,10 @@
  * fibre card pinned beside the story — the child's drawing in a white frame,
  * the hero's name in the display voice, trait chips, backstory, say controls.
  * Sits on the navbar's mat swatch (App.module.css .navMat).
+ *
+ * Tilt budget (paper.module.css): the tape tag is the only thing that rotates
+ * — it is a strip of tape. The card itself sits square, sharing its left and
+ * right edges with the premise card below it. Spacing is the --sp-* scale.
  */
 
 .card {
@@ -14,23 +18,23 @@
   --shb: 20px;
   --sha: 0.42;
   color: var(--ink);
-  padding: 0.9rem 0.9rem 1rem;
-  transform: rotate(-1.6deg);
-  /* Head-room for the tape tag's overhang. */
-  margin-block-start: 0.6rem;
+  padding: var(--sp-4);
+  /* Head-room for the tape tag's overhang (plus the fibre tear). */
+  margin-block-start: var(--sp-4);
 }
 
-/* masking-tape name tag pinned over the top edge */
+/* masking-tape name tag pinned over the top edge, on the world's shared chip
+   offsets — same overhang and inset as the story view's part chip. */
 .tag {
   position: absolute;
-  inset-block-start: -13px;
-  inset-inline-start: 14px;
+  inset-block-start: calc(var(--chip-overhang) * -1);
+  inset-inline-start: var(--chip-inset);
   z-index: 2;
   background: rgba(255, 248, 235, 0.85);
   color: var(--ink);
   font-weight: 800;
   font-size: 0.78rem;
-  padding: 0.2rem 0.7rem;
+  padding: var(--sp-1) var(--sp-3);
   clip-path: polygon(3% 0, 97% 5%, 100% 30%, 97% 62%, 100% 100%, 3% 95%, 0 64%, 3% 30%);
   transform: rotate(-3deg);
   white-space: nowrap;
@@ -55,34 +59,34 @@
   font-family: var(--font-display);
   font-weight: 400;
   font-size: 1.12rem;
-  margin: 0.65rem 0 0;
+  margin: var(--sp-2) 0 0;
 }
 
 .traits {
   list-style: none;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0.5rem 0 0;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
   padding: 0;
 }
 .traits li {
   background: #ffe9c2;
   color: var(--ink);
   border-radius: 999px;
-  padding: 0.22rem 0.7rem;
+  padding: var(--sp-1) var(--sp-3);
   font-size: 0.82rem;
   font-weight: 800;
 }
 
 .backstory {
-  margin: 0.5rem 0 0;
+  margin: var(--sp-2) 0 0;
   font-size: 0.92rem;
   font-weight: 600;
 }
 
 .controls {
-  margin-block-start: 0.7rem;
+  margin-block-start: var(--sp-3);
 }
 
 /* Mantine's default violet anchor is washy on fibre; kingfisher keeps the

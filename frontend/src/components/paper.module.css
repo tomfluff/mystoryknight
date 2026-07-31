@@ -14,9 +14,25 @@
  *                             ReadController)
  *   .errorChip / .errorBtn  — the world's error pattern (poppy-deep on fibre)
  *
- * View-specific colourways and tilts stay in each component's module: they set
- * the custom properties (--sheet, --tf1, --tf2, shadow vars) these primitives
- * consume.
+ * View-specific colourways stay in each component's module: they set the custom
+ * properties (--sheet, --tf1, --tf2, shadow vars) these primitives consume.
+ *
+ * TILT BUDGET (the world's discipline rule). Craft reads as craft when a FEW
+ * physically-stuck-on things sit off-axis against a STABLE GRID; when
+ * everything is askew the page reads as sloppy rather than handmade and the
+ * copy gets harder to read. So rotation is allowed ONLY on things that are
+ * literally stuck onto the page:
+ *   - masking-tape strips (.tape/.tapeA/.tapeB in InstructionView, the strip
+ *     across .snap in StoryPart)
+ *   - the "Do this one!" pointer sticker (.nowTag)
+ *   - the tape tag on a card (.tag in CharacterCard)
+ *   - the taped-snapshot illustration frame (.snap)
+ *   - the floating decorative stars, which share ONE angle set on .decor
+ * Everything else — sheets, scraps, flaps, chips, stickers, buttons, the logo
+ * lockup, the cards — sits square. What carries the handmade variety instead
+ * is the torn edge: vary the tear SEEDS (--tf1/--tf2) between neighbouring
+ * sheets, plus the fibre core, shadow and grain. Do not compensate for a
+ * removed tilt by adding a new effect.
  *
  * Tokens live on :root, not on .mat, for one reason: say stickers and error
  * text also render inside Mantine portals (the action popover, the premise
@@ -49,6 +65,24 @@
   --cream-head: #fff6e9; /* headings on the mat */
   --lav-body: #d9ccf2; /* body copy on the mat */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* SPACING SCALE — one scale for the whole paper world (4px base on a 16px
+     root): 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64. Every margin, padding and gap
+     inside a mat comes from these steps, so sheets, scraps and sections share
+     a rhythm instead of each inventing its own 0.85rem. The rule when placing
+     a heading: more space above it than below it. */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+  /* Chips and tags pinned over a sheet's top edge (.nowTag, .partChip, .tag)
+     all hang by the same amount and sit the same distance in from the leading
+     edge, so they read as one family rather than as scattered offsets. */
+  --chip-overhang: 14px;
+  --chip-inset: 18px;
   /* Latin faces first (they carry the voice but hold no he/ja glyphs), then
      the self-hosted non-Latin fallbacks: Heebo for Hebrew, M PLUS Rounded 1c
      for Japanese — round, friendly faces in the same register. */
@@ -140,7 +174,6 @@
   color: #fff;
   border: 3px solid var(--cream-head);
   cursor: pointer;
-  transform: rotate(-4deg);
   box-shadow: 0 4px 9px rgba(14, 7, 28, 0.35);
   transition: transform 0.18s var(--ease-out), background-color 0.25s var(--ease-out);
 }
@@ -149,7 +182,7 @@
   height: 22px;
 }
 .say:hover:not(:disabled) {
-  transform: rotate(0deg) translateY(-2px);
+  transform: translateY(-2px);
 }
 .say:active:not(:disabled) {
   transform: translateY(1px);
@@ -168,16 +201,16 @@
 }
 @keyframes sayPulse {
   0% {
-    transform: rotate(-4deg) scale(1);
+    transform: scale(1);
   }
   35% {
-    transform: rotate(-4deg) scale(1.16);
+    transform: scale(1.16);
   }
   70% {
-    transform: rotate(-4deg) scale(0.98);
+    transform: scale(0.98);
   }
   100% {
-    transform: rotate(-4deg) scale(1);
+    transform: scale(1);
   }
 }
 /* Restart sticker (ReadController): kingfisher so it is not mistaken for a
@@ -189,7 +222,7 @@
 .sayline {
   display: flex;
   align-items: flex-start;
-  gap: 0.8rem;
+  gap: var(--sp-3);
 }
 .sayline > p {
   flex: 1;
@@ -201,7 +234,7 @@
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--sp-2);
 }
 /* Leading a line of copy, the pair stacks vertically so the text keeps its
    measure (two stickers side by side halve a narrow story column). */
@@ -219,7 +252,7 @@
   color: var(--poppy-deep);
   font-weight: 800;
   font-size: 0.92rem;
-  padding: 0.45rem 0.8rem;
+  padding: var(--sp-2) var(--sp-3);
   border-radius: 10px;
   box-shadow: 0 2px 6px rgba(14, 7, 28, 0.3);
 }

@@ -123,6 +123,12 @@ const strings = {
     ja: "このせんたくしについてもっと",
     es: "Más sobre esta opción",
   },
+  reset: {
+    en: "Reset",
+    he: "התחלה מחדש",
+    ja: "さいしょから",
+    es: "Empezar de nuevo",
+  },
   openMenu: {
     en: "Open menu",
     he: "פתיחת התפריט",
@@ -134,6 +140,13 @@ const strings = {
     he: "סגירת התפריט",
     ja: "メニューをとじる",
     es: "Cerrar el menú",
+  },
+  // Accessible name for the paper close sticker on every modal.
+  closeWindow: {
+    en: "Close this window",
+    he: "סגירת החלון",
+    ja: "このウィンドウをとじる",
+    es: "Cerrar esta ventana",
   },
   readAloud: {
     en: "Read aloud",

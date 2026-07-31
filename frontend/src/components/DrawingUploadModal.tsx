@@ -1,6 +1,5 @@
 import useWebcam from "../hooks/useWebcam";
 import {
-  Text,
   Grid,
   Stack,
   Button,
@@ -17,6 +16,8 @@ import getAxiosInstance from "../utils/axiosInstance";
 import { setCharacter } from "../stores/adventureStore";
 import { createCallContext } from "../utils/llmIntegration";
 import { useUiStrings } from "../i18n/strings";
+import paper from "./paperChrome.module.css";
+import world from "./paper.module.css";
 
 // Lazy: react-webcam only loads when the capture modal actually renders the
 // camera, keeping it out of the initial bundle.
@@ -89,6 +90,15 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
       closeOnEscape={!uploadImage.isPending}
       withCloseButton={!uploadImage.isPending}
       closeOnClickOutside={!uploadImage.isPending}
+      closeButtonProps={{ "aria-label": t("closeWindow") }}
+      classNames={{
+        overlay: paper.overlay,
+        content: `${paper.content} ${paper.sheetGrass}`,
+        header: paper.header,
+        title: paper.title,
+        body: paper.body,
+        close: paper.close,
+      }}
     >
       <Container>
         <Stack>
@@ -108,21 +118,41 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
               }
               allowDeselect={false}
               disabled={devices.length === 0}
+              classNames={{
+                wrapper: paper.fieldWrapper,
+                input: paper.fieldInput,
+                section: paper.fieldSection,
+                dropdown: paper.dropdown,
+                option: paper.option,
+              }}
             />
           )}
-          {!click && cameraError && <Text c="red">{t(cameraError)}</Text>}
-          {!click && !cameraError && (
-            <Suspense fallback={<Loader />}>
-              <Webcam
-                ref={webcamRef}
-                videoConstraints={videoConstraints}
-                onUserMedia={refreshDevices}
-                onUserMediaError={handleUserMediaError}
-              />
-            </Suspense>
+          {/* Plain <p>: the world's error chip paints its own colour, and a
+              Mantine Text would layer --text-color back over it. */}
+          {!click && cameraError && (
+            <p className={world.errorChip} role="alert">
+              {t(cameraError)}
+            </p>
           )}
-          {click && base64Capture && (
-            <Image src={base64Capture} alt={t("capturedDrawingAlt")} />
+          {/* One framed slot at a reserved 4:3 for all three media states, so
+              the buttons under it do not jump between loader, camera and
+              capture. */}
+          {(click ? !!base64Capture : !cameraError) && (
+            <div className={paper.frameMedia}>
+              {!click && (
+                <Suspense fallback={<Loader className={paper.loaderInk} />}>
+                  <Webcam
+                    ref={webcamRef}
+                    videoConstraints={videoConstraints}
+                    onUserMedia={refreshDevices}
+                    onUserMediaError={handleUserMediaError}
+                  />
+                </Suspense>
+              )}
+              {click && base64Capture && (
+                <Image src={base64Capture} alt={t("capturedDrawingAlt")} />
+              )}
+            </div>
           )}
           <Grid>
             {click && (
@@ -132,9 +162,14 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
                   disabled={uploadImage.isPending}
                   fullWidth
                   h={44}
+                  classNames={{ root: paper.btn }}
                 >
                   {uploadImage.isPending ? (
-                    <Loader color="gray" type="dots" size="md" />
+                    <Loader
+                      className={paper.loaderCream}
+                      type="dots"
+                      size="md"
+                    />
                   ) : (
                     t("send")
                   )}
@@ -143,11 +178,14 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
             )}
             {click && (
               <Grid.Col span={4}>
+                {/* fibre sticker, not a second poppy one: Send is the
+                    primary and width alone was the only hierarchy cue */}
                 <Button
                   onClick={handleRetake}
                   disabled={uploadImage.isPending}
                   fullWidth
                   h={44}
+                  classNames={{ root: paper.btnQuiet }}
                 >
                   {t("retake")}
                 </Button>
@@ -160,13 +198,18 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
                   fullWidth
                   h={44}
                   disabled={!!cameraError}
+                  classNames={{ root: paper.btnGo }}
                 >
                   {t("capture")}
                 </Button>
               </Grid.Col>
             )}
           </Grid>
-          {uploadImage.isError && <Text c="red">{t("uploadFailed")}</Text>}
+          {uploadImage.isError && (
+            <p className={world.errorChip} role="alert">
+              {t("uploadFailed")}
+            </p>
+          )}
         </Stack>
       </Container>
     </Modal>

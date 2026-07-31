@@ -1,1 +1,29 @@
-/* Root */
+/*
+ * The craft ground IS the page.
+ *
+ * The paper-craft world (DESIGN.md, "The paper-craft world") used to be a
+ * rounded violet card floating inside Mantine's dark-gray chrome, with a
+ * gutter on all four sides. The ground now owns the document, so there is no
+ * app-shell colour left to re-decide: header, navbar, main and footer are all
+ * painted in this same ground (App.module.css).
+ *
+ * Like a mat, the ground is a scene rather than a themed surface (DESIGN.md's
+ * dark-mode carve-out): it is deliberately the same in BOTH colour schemes, so
+ * the light scheme cannot put white or gray chrome back around the world.
+ *
+ * `:root body` (0,1,1) rather than a bare `body` (0,0,1): Mantine's reset also
+ * styles `body` with `background-color: var(--mantine-color-body)`, and which
+ * of the two lands last in the bundle is not something this file should have
+ * to depend on. `--ground` is the world's token, declared once at `:root` in
+ * paper.module.css.
+ */
+:root,
+:root body {
+  background-color: var(--ground);
+}
+
+:root body {
+  /* Torn-sheet pseudo-elements sit 6px outside their box; on full-bleed
+     surfaces that must not raise a horizontal scrollbar. */
+  overflow-x: hidden;
+}

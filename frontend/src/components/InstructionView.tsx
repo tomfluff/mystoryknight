@@ -131,21 +131,11 @@ const InstructionView = () => {
       <div className={classes.entry}>
         <div className={classes.grain} aria-hidden="true" />
 
-        <div className={classes.masthead}>
-          <div className={`${classes.lockup} ${classes.paper}`}>
-            <span className={classes.logoArt} aria-hidden="true">
-              <img
-                src={`${import.meta.env.BASE_URL}logo.png`}
-                alt=""
-                loading="eager"
-              />
-            </span>
-            <p className={classes.wordmark}>MyStoryKnight.</p>
-          </div>
-          <StarDecor className={classes.decorStar1} />
-          <StarDecor className={classes.decorStar2} />
-          <StarDecor className={classes.decorStar3} />
-        </div>
+        {/* No lockup here: the app header carries the only wordmark. The
+            stars stay as loose table decoration. */}
+        <StarDecor className={classes.decorStar1} />
+        <StarDecor className={classes.decorStar2} />
+        <StarDecor className={classes.decorStar3} />
 
         <div className={classes.intro}>
           <h1 className={classes.title}>{t("entryTitle")}</h1>

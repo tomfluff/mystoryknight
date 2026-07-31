@@ -3,7 +3,11 @@ import getAxiosInstance from "../utils/axiosInstance";
 import { setCharacter } from "../stores/adventureStore";
 import { createCallContext } from "../utils/llmIntegration";
 import { useUiStrings, TUiStringKey } from "../i18n/strings";
+// Section layout (the "or" rule, the grid, the notes) belongs to the entry
+// sheet; the tile frame is its own module, shared with the modals' picture
+// frame so the two read as one system.
 import classes from "./InstructionView.module.css";
+import tile from "./HeroGallery.module.css";
 
 /*
  * "No drawing today? Pick a hero!" — six ready-made drawings (made by other
@@ -78,17 +82,17 @@ const HeroGallery = () => {
           <button
             key={hero.nameKey}
             type="button"
-            className={classes.heroTile}
+            className={tile.tile}
             disabled={pickHero.isPending}
             onClick={() => pickHero.mutate(i)}
           >
-            <span className={classes.heroTileArt}>
+            <span className={tile.tileArt}>
               {/* Decorative: the tile's visible name is the accessible name. */}
               <img src={hero.src} alt="" loading="lazy" />
             </span>
-            <span className={classes.heroTileName}>{t(hero.nameKey)}</span>
+            <span className={tile.tileName}>{t(hero.nameKey)}</span>
             {pickHero.isPending && pickHero.variables === i && (
-              <span className={classes.heroTileBadge} aria-hidden="true">
+              <span className={tile.tileBadge} aria-hidden="true">
                 <svg className={classes.spin} viewBox="0 0 24 24">
                   <path
                     d="M12 2l2.9 6 6.6.9-4.8 4.5 1.2 6.5L12 16.8 6.1 19.9l1.2-6.5L2.5 8.9 9.1 8z"

@@ -3,7 +3,6 @@ import {
   ActionIcon,
   useMantineColorScheme,
   useComputedColorScheme,
-  Group,
 } from "@mantine/core";
 import { FaSun, FaMoon } from "react-icons/fa";
 import classes from "./ColorSchemeToggle.module.css";
@@ -14,19 +13,19 @@ export function ColorSchemeToggle() {
     getInitialValueInEffect: true,
   });
 
+  /* No wrapper: the toggle is one control in the header/navbar control row,
+     and its own Group was fighting that row's gap. */
   return (
-    <Group justify="center">
-      <ActionIcon
-        onClick={() =>
-          setColorScheme(computedColorScheme === "light" ? "dark" : "light")
-        }
-        variant="default"
-        size="xl"
-        aria-label="Toggle color scheme"
-      >
-        <FaSun className={cx(classes.icon, classes.light)} />
-        <FaMoon className={cx(classes.icon, classes.dark)} />
-      </ActionIcon>
-    </Group>
+    <ActionIcon
+      onClick={() =>
+        setColorScheme(computedColorScheme === "light" ? "dark" : "light")
+      }
+      variant="default"
+      size="xl"
+      aria-label="Toggle color scheme"
+    >
+      <FaSun className={cx(classes.icon, classes.light)} />
+      <FaMoon className={cx(classes.icon, classes.dark)} />
+    </ActionIcon>
   );
 }

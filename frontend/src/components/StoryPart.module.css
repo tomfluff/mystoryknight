@@ -8,6 +8,12 @@
  * themed surface (DESIGN.md, "Dark mode" carve-out) — the fibre scrap keeps
  * the same fibre/ink pairing in BOTH colour schemes, so there is no scheme
  * pair left to declare. The Dark-mode convention still applies outside mats.
+ *
+ * Tilt budget (paper.module.css): the taped snapshot is the only thing here
+ * that rotates — it is a photo taped to the page. The scrap, the part chip,
+ * the avatar sticker and the end scrap all sit square, so a column of story
+ * parts reads as a stack rather than a scatter. Spacing comes from the shared
+ * --sp-* scale.
  */
 
 /* Fibre story scrap: ink text + the part's say controls on torn paper. */
@@ -20,32 +26,30 @@
   --shb: 22px;
   --sha: 0.44;
   color: var(--ink);
-  padding: 1.1rem 1.2rem 1.15rem;
-  transform: rotate(0.5deg);
-  /* Head-room for the part chip's -14px overhang (plus the fibre tear). */
-  margin-block-start: 0.85rem;
+  padding: var(--sp-4);
+  /* Head-room for the part chip's overhang (plus the fibre tear). */
+  margin-block-start: var(--sp-4);
 }
 .scrapText {
   font-size: 1.05rem;
   font-weight: 600;
 }
 
-/* "Part N" paper chip pinned to the scrap's top corner. aria-hidden: the
-   visually-hidden per-part h2 in StoryView carries the same text for
-   screen readers. */
+/* "Part N" paper chip pinned to the scrap's top corner, on the world's shared
+   chip offsets. aria-hidden: the visually-hidden per-part h2 in StoryView
+   carries the same text for screen readers. */
 .partChip {
   position: absolute;
-  inset-block-start: -14px;
-  inset-inline-start: 16px;
+  inset-block-start: calc(var(--chip-overhang) * -1);
+  inset-inline-start: var(--chip-inset);
   z-index: 2;
   background: var(--kingfisher);
   color: #fff;
   font-weight: 800;
   font-size: 0.82rem;
-  padding: 0.28rem 0.7rem;
+  padding: var(--sp-1) var(--sp-3);
   border-radius: 10px;
   border: 2.5px solid var(--cream-head);
-  transform: rotate(-3deg);
   box-shadow: 0 3px 8px rgba(14, 7, 28, 0.4);
   white-space: nowrap;
 }
@@ -55,12 +59,12 @@
   background: #fff;
   border: 3px solid #fff;
   box-shadow: 0 3px 7px rgba(14, 7, 28, 0.3);
-  transform: rotate(-2deg);
 }
 
 /* Illustration as a taped snapshot: white photo frame, slight tilt, a strip
-   of masking tape across the top. The tape is centred with logical-safe
-   auto margins so it stays centred under RTL. */
+   of masking tape across the top. This is the view's sanctioned tilt — a
+   photo physically taped down. The tape is centred with logical-safe auto
+   margins so it stays centred under RTL. */
 .snap {
   background: #fff;
   border: 5px solid #fff;
@@ -95,6 +99,5 @@
   font-family: var(--font-display);
   font-weight: 400;
   font-size: 1.2rem;
-  padding: 0.8rem 1.2rem;
-  transform: rotate(-1.2deg);
+  padding: var(--sp-3) var(--sp-4);
 }

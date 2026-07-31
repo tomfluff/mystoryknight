@@ -3,11 +3,14 @@
  * "Then your story looks like this" region). The mat ground, torn paper and
  * error recipes come from paper.module.css; this module only sizes the mat
  * and dresses the view-level loading/error states.
+ *
+ * Nothing here rotates: a state scrap and a retry button are not taped-on
+ * objects (tilt budget, paper.module.css). Spacing is the shared --sp-* scale.
  */
 
 .storyMat {
   composes: mat from "./paper.module.css";
-  padding: 1.75rem 0.5rem 2.5rem;
+  padding: var(--sp-5) var(--sp-2) var(--sp-6);
 }
 
 /* View-level pending/failed states sit on a small fibre scrap mid-mat:
@@ -24,13 +27,12 @@
   color: var(--ink);
   width: fit-content;
   max-width: 28rem;
-  margin: 2.5rem auto;
-  padding: 1.1rem 1.4rem;
+  margin: var(--sp-6) auto;
+  padding: var(--sp-4) var(--sp-5);
   text-align: center;
-  transform: rotate(-1deg);
   display: grid;
   justify-items: center;
-  gap: 0.7rem;
+  gap: var(--sp-3);
 }
 .stateError {
   margin: 0;
@@ -42,7 +44,7 @@
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding: 0.55rem 1.2rem;
+  padding: var(--sp-2) var(--sp-4);
   background: var(--poppy);
   color: #fff;
   border: 3px solid var(--cream-head);
@@ -51,12 +53,11 @@
   font-weight: 800;
   font-size: 1rem;
   cursor: pointer;
-  transform: rotate(-0.6deg);
   box-shadow: 0 6px 14px rgba(14, 7, 28, 0.38);
   transition: transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out);
 }
 .retryBtn:hover {
-  transform: rotate(0.4deg) translateY(-3px);
+  transform: translateY(-3px);
   box-shadow: 0 10px 20px rgba(14, 7, 28, 0.42);
 }
 .retryBtn:active {

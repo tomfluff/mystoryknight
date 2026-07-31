@@ -10,11 +10,24 @@
  * bridges: they keep this view's markup and descendant selectors untouched
  * while sourcing the mechanics from the one shared module. Everything else in
  * this file is entry-specific dressing (sheets, tape, steps, gallery, teaser).
+ *
+ * Two rules from paper.module.css govern the layout here:
+ *   - TILT BUDGET — only the tape strips and the "Do this one!" nowTag rotate;
+ *     the sheets, chips, stickers, buttons and the logo lockup sit square, and
+ *     the decorative stars share ONE angle set on .decor.
+ *   - SPACING SCALE — every margin/padding/gap is a --sp-* step. The three
+ *     column blocks (.intro, .steps, .steer) share one measure and one gutter
+ *     so every sheet and section lines up on the same left/right edges.
  */
 
 .entry {
   composes: mat from "./paper.module.css";
-  padding-block: 0 3.5rem;
+  /* The one column every block on the mat is measured against, and the one
+     gutter they all share — .intro, .steps and .steer therefore line up on
+     exactly the same left/right edges. */
+  --measure: 47rem;
+  --gutter: var(--sp-5);
+  padding-block: 0 var(--sp-7);
 }
 
 /* bridges to the shared primitives (see header) */
@@ -25,84 +38,45 @@
   composes: grain from "./paper.module.css";
 }
 
-/* ============ masthead + logo lockup ============ */
-.masthead {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  padding: 2.4rem 1rem 0;
-}
-.lockup {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding-block: 0.5em;
-  padding-inline: 0.9em 1.15em;
-  transform: rotate(-2deg);
-  --sheet: var(--poppy);
-  --tf1: url(#msk-tearC);
-  --tf2: url(#msk-tearD);
-  --shy: 6px;
-  --shb: 16px;
-  --sha: 0.45;
-}
-/* LOGO SLOT — swappable: one fixed box. To try a generated logo, replace the
-   <EntryLogo /> inside .logoArt with <img src="…" alt=""> at the same size. */
-.logoArt {
-  flex: none;
-  width: 46px;
-  height: 46px;
-  display: block;
-}
-.logoArt > svg,
-.logoArt > img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  /* generated mark is portrait (579x835); never stretch it */
-  object-fit: contain;
-}
-.wordmark {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(1.15rem, 1rem + 1vw, 1.5rem);
-  letter-spacing: 0.02em;
-  color: #fff;
-  margin: 0;
-}
+/* The masthead lockup lived here until the shell took the world over: the app
+   header now carries the only wordmark in the app (App.module.css). */
 
-/* floating decorative stickers (aria-hidden) */
+/* floating decorative stickers (aria-hidden). These are the one family that
+   keeps a tilt without being taped down — and they share a SINGLE angle, so
+   they read as three stars cut from the same sheet rather than three
+   independent accidents (tilt budget, paper.module.css). */
 .decor {
   position: absolute;
   z-index: 0;
   pointer-events: none;
+  transform: rotate(-8deg);
 }
 .decor svg {
   display: block;
   width: 100%;
 }
+/* Kept clear of the text column: the intro is centred on --measure, so the
+   stars live in the margin beside it, never over the title. Below 48em there
+   is no margin left, so they go (see the media query). */
 .decorStar1 {
-  top: 2.2rem;
-  inset-inline-start: 8%;
+  top: 3rem;
+  inset-inline-start: max(1.5rem, calc(50% - var(--measure) / 2 - 4rem));
   width: 44px;
   color: var(--marigold);
-  transform: rotate(-14deg);
   animation: bob 7s ease-in-out infinite alternate;
 }
 .decorStar2 {
-  top: 6.5rem;
-  inset-inline-end: 7%;
+  top: 8.5rem;
+  inset-inline-end: max(1.5rem, calc(50% - var(--measure) / 2 - 3.5rem));
   width: 30px;
   color: var(--sky);
-  transform: rotate(11deg);
   animation: bob 9s ease-in-out infinite alternate-reverse;
 }
 .decorStar3 {
-  top: 14rem;
-  inset-inline-start: 3%;
+  top: 17rem;
+  inset-inline-start: max(1rem, calc(50% - var(--measure) / 2 - 5rem));
   width: 24px;
   color: var(--grass);
-  transform: rotate(24deg);
   animation: bob 8s ease-in-out infinite alternate;
 }
 @keyframes bob {
@@ -115,10 +89,12 @@
 }
 
 /* ============ intro ============ */
+/* First element on the mat now that the masthead is gone, so it carries the
+   top breathing room the masthead used to provide. */
 .intro {
-  max-width: 46rem;
+  max-width: var(--measure);
   margin: 0 auto;
-  padding: 2rem 1.25rem 0.6rem;
+  padding: var(--sp-7) var(--gutter) 0;
   text-align: center;
 }
 .title {
@@ -133,7 +109,7 @@
   margin: 0;
 }
 .lede {
-  margin: 1.1rem auto 0;
+  margin: var(--sp-4) auto 0;
   max-width: 38rem;
   font-size: clamp(1rem, 0.95rem + 0.35vw, 1.15rem);
   color: var(--lav-body);
@@ -145,16 +121,15 @@
 .tryThis {
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
-  margin: 1.15rem 0 0;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 0;
   background: var(--fibre);
   color: var(--ink);
   border-radius: 14px;
-  padding-block: 0.5rem;
-  padding-inline: 0.5rem 0.95rem;
+  padding-block: var(--sp-2);
+  padding-inline: var(--sp-2) var(--sp-4);
   font-weight: 800;
   font-size: 0.95rem;
-  transform: rotate(-1.2deg);
   box-shadow: 0 5px 12px rgba(14, 7, 28, 0.4);
   text-align: start;
 }
@@ -169,21 +144,22 @@
 /* ============ the step stack ============ */
 .steps {
   list-style: none;
-  max-width: 47rem;
-  margin: 2.6rem auto 0;
-  padding: 0 1.25rem;
+  max-width: var(--measure);
+  margin: var(--sp-7) auto 0;
+  padding: 0 var(--gutter);
   display: flex;
   flex-direction: column;
-  gap: 2.1rem;
+  gap: var(--sp-6);
 }
 .step {
-  padding: 1.5rem 1.75rem 1.6rem;
-  transform: rotate(var(--rot, 0deg)) scale(var(--s, 1));
+  padding: var(--sp-5);
+  /* Square, always. Depth between sheets is carried by scale + shadow, not by
+     a per-sheet angle (tilt budget). */
+  transform: scale(var(--s, 1));
   transition: transform 0.5s var(--ease-out);
   color: var(--stepink, var(--ink));
 }
 .step[data-state="current"] {
-  transform: rotate(0deg) scale(1);
   --shy: 16px;
   --shb: 36px;
   --sha: 0.5;
@@ -195,7 +171,7 @@
   --sha: 0.28;
 }
 .step[data-state="done"] {
-  transform: rotate(calc(var(--rot, 0deg) * 1.7)) scale(0.99);
+  transform: scale(0.99);
   --shy: 7px;
   --shb: 16px;
   --sha: 0.32;
@@ -205,7 +181,7 @@
 .stepHead {
   display: flex;
   align-items: center;
-  gap: 0.95rem;
+  gap: var(--sp-4);
   position: relative;
   z-index: 1;
 }
@@ -233,7 +209,6 @@
   border: 3px solid var(--numc, var(--poppy));
   font-family: var(--font-display);
   font-size: 1.45rem;
-  transform: rotate(-5deg);
   box-shadow: 0 3px 7px rgba(14, 7, 28, 0.3);
 }
 
@@ -242,7 +217,7 @@
   display: none;
   font-weight: 700;
   font-size: 0.98rem;
-  margin: 0.15rem 0 0;
+  margin: var(--sp-1) 0 0;
 }
 .step[data-state="done"] .summary {
   display: block;
@@ -257,7 +232,6 @@
   border: 3px solid #fff;
   place-items: center;
   box-shadow: 0 4px 9px rgba(14, 7, 28, 0.35);
-  transform: rotate(6deg);
 }
 .check svg {
   width: 24px;
@@ -272,15 +246,14 @@
   flex: none;
   display: none;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--sp-2);
   background: var(--fibre);
   color: var(--ink);
   border-radius: 999px;
-  padding: 0.4rem 0.85rem;
+  padding: var(--sp-2) var(--sp-3);
   font-weight: 800;
   font-size: 0.86rem;
   white-space: nowrap;
-  transform: rotate(1.5deg);
   box-shadow: 0 2px 6px rgba(14, 7, 28, 0.3);
 }
 .lockChip svg {
@@ -292,18 +265,19 @@
   display: inline-flex;
 }
 
-/* "do this one" pointer sticker */
+/* "do this one" pointer sticker — stuck onto the sheet, so it keeps its tilt
+   (tilt budget). Hangs on the shared chip offsets. */
 .nowTag {
   display: none;
   position: absolute;
-  inset-block-start: -16px;
-  inset-inline-end: 22px;
+  inset-block-start: calc(var(--chip-overhang) * -1);
+  inset-inline-end: var(--chip-inset);
   z-index: 2;
   background: var(--poppy);
   color: #fff;
   font-weight: 800;
   font-size: 0.88rem;
-  padding: 0.4rem 0.8rem;
+  padding: var(--sp-2) var(--sp-3);
   border-radius: 11px;
   border: 2.5px solid var(--cream-head);
   transform: rotate(3deg);
@@ -313,7 +287,8 @@
   display: block;
 }
 
-/* masking tape on locked sheets */
+/* masking tape on locked sheets — literally stuck on, so tape is where the
+   view spends its rotation budget. */
 .tape {
   position: absolute;
   z-index: 2;
@@ -378,8 +353,10 @@
   visibility: visible;
   transition-delay: 0.22s;
 }
+/* Below the sheet heading, above the sheet padding: the heading keeps more
+   room above it (--sp-5 of sheet padding) than below it. */
 .bodyInner {
-  padding-block-start: 1.1rem;
+  padding-block-start: var(--sp-4);
 }
 .body .sayline > p {
   max-width: 32rem;
@@ -387,22 +364,22 @@
 .note {
   font-size: 0.92rem;
   font-weight: 600;
-  margin: 0.8rem 0 0;
+  margin: var(--sp-3) 0 0;
   color: var(--subink, #5c3a00);
 }
 /* Error chip: fibre ground so the red stays AA on any sheet colour (shared
    recipe — the story view uses the same .errorChip). */
 .errorNote {
   composes: errorChip from "./paper.module.css";
-  margin: 0.8rem 0 0;
+  margin: var(--sp-3) 0 0;
 }
 
-/* per-sheet colourways */
+/* per-sheet colourways. With rotation gone, the tear SEEDS carry the
+   handmade variety: no two neighbouring sheets share a --tf1/--tf2 pair. */
 .stepOne {
   --sheet: var(--marigold);
   --tf1: url(#msk-tearA);
   --tf2: url(#msk-tearB);
-  --rot: -1.1deg;
   --stepink: var(--ink);
   --subink: #5c3a00;
   --numc: var(--poppy);
@@ -411,7 +388,6 @@
   --sheet: var(--grass);
   --tf1: url(#msk-tearC);
   --tf2: url(#msk-tearE);
-  --rot: 1.2deg;
   --stepink: var(--ink);
   --subink: #0c2a10;
   --numc: var(--kingfisher);
@@ -420,7 +396,6 @@
   --sheet: var(--violet);
   --tf1: url(#msk-tearB);
   --tf2: url(#msk-tearD);
-  --rot: -0.9deg;
   --stepink: #fff;
   --subink: #f1e9ff;
   --numc: var(--violet);
@@ -437,9 +412,9 @@
 .stickerBtn {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: var(--sp-2);
   min-height: 50px;
-  padding: 0.72rem 1.45rem;
+  padding: var(--sp-3) var(--sp-5);
   background: var(--btn, var(--poppy));
   color: #fff;
   border: 3px solid var(--cream-head);
@@ -448,10 +423,9 @@
   font-weight: 800;
   font-size: 1.12rem;
   cursor: pointer;
-  transform: rotate(-0.6deg);
   box-shadow: 0 6px 14px rgba(14, 7, 28, 0.38);
   transition: transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out);
-  margin-block-start: 1rem;
+  margin-block-start: var(--sp-4);
 }
 .stickerBtn svg {
   width: 21px;
@@ -459,7 +433,7 @@
   flex: none;
 }
 .stickerBtn:hover {
-  transform: rotate(0.4deg) translateY(-3px);
+  transform: translateY(-3px);
   box-shadow: 0 10px 20px rgba(14, 7, 28, 0.42);
 }
 .stickerBtn:active {
@@ -478,6 +452,7 @@
 .spin {
   animation: spin 1.3s linear infinite;
 }
+/* The pending spinner — a full revolution, not a tilt; outside the budget. */
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -488,8 +463,8 @@
 .orLine {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  margin: 1.6rem 0 0.2rem;
+  gap: var(--sp-3);
+  margin: var(--sp-5) 0 var(--sp-1);
 }
 .orLine::before,
 .orLine::after {
@@ -504,7 +479,7 @@
   letter-spacing: 0.01em;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--sp-2);
   margin: 0;
 }
 .orTitle svg {
@@ -515,102 +490,21 @@
 .galleryTip {
   font-size: 0.95rem;
   font-weight: 600;
-  margin: 0.35rem 0 0;
+  margin: var(--sp-2) 0 0;
   color: var(--subink);
 }
 .gallery {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.9rem;
-  margin-block-start: 1rem;
-}
-.heroTile {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border: 4px solid #fff;
-  border-radius: 17px;
-  padding: 0;
-  overflow: visible;
-  cursor: pointer;
-  box-shadow: 0 5px 12px rgba(14, 7, 28, 0.32);
-  transform: rotate(var(--tilt, 0deg));
-  transition: transform 0.18s var(--ease-out), box-shadow 0.18s var(--ease-out);
-  font: inherit;
-  color: var(--ink);
-  min-height: 44px;
-}
-.heroTile:nth-child(odd) {
-  --tilt: -1.4deg;
-}
-.heroTile:nth-child(even) {
-  --tilt: 1.2deg;
-}
-.heroTile:hover,
-.heroTile:focus-visible {
-  transform: rotate(calc(var(--tilt, 0deg) - 2.4deg)) translateY(-7px) scale(1.045);
-  box-shadow: 0 13px 24px rgba(14, 7, 28, 0.4);
-  z-index: 3;
-}
-.heroTile:active {
-  transform: rotate(var(--tilt)) translateY(0) scale(0.99);
-}
-.heroTile:disabled {
-  cursor: default;
-  opacity: 0.65;
-  transform: rotate(var(--tilt, 0deg));
-  box-shadow: 0 5px 12px rgba(14, 7, 28, 0.32);
-}
-.heroTileArt {
-  display: block;
-  border-start-start-radius: 12px;
-  border-start-end-radius: 12px;
-  overflow: hidden;
-  background: #fbf6ec;
-}
-.heroTileArt img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-}
-.heroTileName {
-  display: block;
-  padding: 0.5rem 0.4rem 0.55rem;
-  font-weight: 800;
-  font-size: 0.92rem;
-  text-align: center;
-  line-height: 1.2;
-}
-/* pending badge on the tile being sent (spinning star) */
-.heroTileBadge {
-  position: absolute;
-  inset-block-start: -12px;
-  inset-inline-end: -10px;
-  z-index: 2;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--kingfisher);
-  border: 3px solid #fff;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 3px 7px rgba(14, 7, 28, 0.35);
-}
-.heroTileBadge svg {
-  width: 19px;
-  height: 19px;
-}
-.heroTile:disabled .heroTileArt img {
-  filter: saturate(0.75);
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-4);
 }
 
 /* ============ section headings on the mat ============ */
 .steer {
-  max-width: 47rem;
-  margin: 4rem auto 0;
-  padding: 0 1.25rem;
+  max-width: var(--measure);
+  margin: var(--sp-8) auto 0;
+  padding: 0 var(--gutter);
   text-align: center;
 }
 .matH2 {
@@ -624,10 +518,11 @@
   text-shadow: 0 3px 0 rgba(14, 7, 28, 0.45);
   margin: 0;
 }
+/* --sp-8 above the heading, --sp-3 below it. */
 .matLede {
   color: var(--lav-body);
   max-width: 37rem;
-  margin: 0.8rem auto 0;
+  margin: var(--sp-3) auto 0;
 }
 .matLede strong {
   color: var(--cream-head);
@@ -635,10 +530,10 @@
 
 /* ============ "you choose" teaser ============ */
 .steerBoard {
-  margin-block-start: 2rem;
+  margin-block-start: var(--sp-6);
   display: grid;
   justify-items: center;
-  gap: 0.4rem;
+  gap: var(--sp-2);
 }
 .moment {
   --sheet: var(--fibre);
@@ -649,32 +544,30 @@
   --sha: 0.4;
   color: var(--ink);
   max-width: 27rem;
-  padding: 1rem 1.25rem;
-  transform: rotate(-1deg);
+  padding: var(--sp-4) var(--sp-5);
   font-weight: 700;
   text-align: start;
 }
 .split {
   width: 190px;
   height: 38px;
-  margin: 0.55rem 0 0.2rem;
+  margin: var(--sp-2) 0 var(--sp-1);
 }
 .branch {
   width: 100%;
   max-width: 37rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.1rem;
+  gap: var(--sp-4);
 }
 .fork {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  padding: 0.95rem 1.15rem;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
   font-weight: 800;
   text-align: start;
   line-height: 1.3;
-  transform: rotate(var(--tilt, 0deg));
 }
 .fork svg {
   flex: none;
@@ -690,30 +583,28 @@
   --sheet: var(--sky);
   --tf1: url(#msk-tearB);
   --tf2: url(#msk-tearE);
-  --tilt: -1.6deg;
   color: var(--ink);
 }
 .forkB {
   --sheet: var(--marigold);
   --tf1: url(#msk-tearE);
   --tf2: url(#msk-tearC);
-  --tilt: 1.4deg;
   color: var(--ink);
 }
 .steerCap {
-  margin: 1.1rem 0 0;
+  margin: var(--sp-4) 0 0;
   font-weight: 700;
   font-size: 0.95rem;
   color: var(--lav-body);
 }
 .steerRow {
-  margin: 2rem auto 0;
+  margin: var(--sp-6) auto 0;
   max-width: 40rem;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 2rem;
+  gap: var(--sp-6);
 }
 .chatScrap {
   --sheet: var(--violet);
@@ -724,8 +615,7 @@
   --sha: 0.4;
   color: #fff;
   max-width: 20rem;
-  padding: 1rem 1.2rem 1.1rem;
-  transform: rotate(1.2deg);
+  padding: var(--sp-4);
   text-align: start;
 }
 .chatLabel {
@@ -734,14 +624,14 @@
   margin: 0;
 }
 .chatMsg {
-  margin: 0.65rem 0 0;
+  margin: var(--sp-2) 0 0;
   background: #fff;
   color: var(--ink);
   border-start-start-radius: 13px;
   border-start-end-radius: 13px;
   border-end-end-radius: 3px;
   border-end-start-radius: 13px;
-  padding: 0.45rem 0.8rem;
+  padding: var(--sp-2) var(--sp-3);
   font-weight: 700;
   font-size: 0.95rem;
   width: fit-content;
@@ -749,7 +639,7 @@
   box-shadow: 0 3px 7px rgba(14, 7, 28, 0.3);
 }
 .chatReply {
-  margin: 0.5rem 0 0;
+  margin: var(--sp-2) 0 0;
   font-style: italic;
   font-weight: 600;
   font-size: 0.95rem;
@@ -759,7 +649,7 @@
   max-width: 15rem;
   display: grid;
   justify-items: center;
-  gap: 0.7rem;
+  gap: var(--sp-3);
 }
 .endSticker {
   width: 96px;
@@ -774,7 +664,6 @@
   font-size: 1.15rem;
   line-height: 1.05;
   text-align: center;
-  transform: rotate(5deg);
   box-shadow: 0 6px 14px rgba(14, 7, 28, 0.42);
 }
 .endCap {
@@ -784,34 +673,37 @@
   margin: 0;
 }
 
-/* ============ responsive ============ */
+/* ============ responsive ============
+   The gutter narrows one step; the measure and every other spacing value keeps
+   coming from the same scale, so the column edges stay shared. */
 @media (max-width: 40em) {
-  .masthead {
-    padding-block-start: 1.6rem;
+  .entry {
+    --gutter: var(--sp-4);
   }
   .intro {
-    padding-block-start: 1.5rem;
-  }
-  .steps,
-  .steer {
-    padding-inline: 0.9rem;
+    padding-block-start: var(--sp-6);
   }
   .step {
-    padding: 1.15rem 1.1rem 1.25rem;
+    padding: var(--sp-4);
   }
   .gallery {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
   }
-  .decorStar3 {
+  /* No margin left beside the text column at this width, so the loose
+     decoration would land on the title. */
+  .decor {
     display: none;
   }
   .lockChip {
     font-size: 0.8rem;
-    padding: 0.35rem 0.7rem;
+  }
+  /* "Do this one!" hangs over the sheet's top-inline-end corner; keep the
+     step title out from under it. */
+  .stepHeadText {
+    padding-inline-end: 5.5rem;
   }
   .stepHead {
-    gap: 0.7rem;
+    gap: var(--sp-3);
   }
   .num {
     width: 42px;
@@ -824,10 +716,6 @@
   .tapeB {
     inset-inline-end: -16px;
   }
-  .logoArt {
-    width: 38px;
-    height: 38px;
-  }
 }
 @media (max-width: 35em) {
   .branch {
@@ -838,7 +726,7 @@
     display: none;
   }
   .steerRow {
-    gap: 1.6rem;
+    gap: var(--sp-5);
   }
 }
 @media (max-width: 26.25em) {
@@ -848,7 +736,7 @@
     display: none;
   }
   .lockChip {
-    padding: 0.45rem;
+    padding: var(--sp-2);
   }
 }
 

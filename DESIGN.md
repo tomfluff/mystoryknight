@@ -31,10 +31,10 @@ sanctioned hex is the sparkle block, see below):
 | Role | Colour | Where | Why |
 |---|---|---|---|
 | Primary | `violet` | Theme `primaryColor` (modals, header controls, links) | The app's identity colour in Mantine chrome; inside the paper world the violet lives in the mat ground token |
-| Destructive | `orange.6` + `autoContrast` | Reset button (`App.tsx`) | `color="orange"` alone measured 3.58:1 at 14px and failed WCAG AA; `orange.6` with `autoContrast` keeps the destructive signal at AA contrast |
+| Destructive | `--poppy-deep` on `--cream-head` | Reset sticker (`App.tsx`) | Measures 6.23:1 (5.21:1 disabled). The earlier Mantine `orange.6` + `autoContrast` was the AA-safe answer while the shell was still Mantine; in the paper world the deep poppy carries the same destructive read in-world |
 | Inactive action | dimmed paper (`opacity` + flattened shadow + native `disabled`) | `ActionButton` when `!action.active && !action.used` | The taken action keeps its paper colour and gains a check sticker, so the story's history keeps its colour and the pick is marked by shape |
 | Error | `--poppy-deep` on `--fibre` (`.errorChip` in `paper.module.css`) | Inline failure text and retry affordances | Errors are always accompanied by text, never colour alone; the fibre chip keeps the red at 6.3:1 on any ground |
-| Brand flourish | gradient `violet → grape` | Footer author button | Decorative; only place a gradient is used |
+| Brand flourish | — | — | There is no gradient in the app. The footer's violet→grape pill went when the footer became a paper scrap; do not reintroduce one |
 
 **Colour is never the sole signal.** The Ending affordance is deliberately NOT
 a colour change: the flap keeps its paper colour and gains sparkles instead, because
@@ -83,9 +83,12 @@ on a deep-violet craft mat. It began entry-only; the once-open decision to
 extend it is now closed — the world deliberately spans the entry view
 (`InstructionView.*`), the story view (`StoryView.*`, `StoryPart.*`,
 `ActionButton.*`, `ReadController.tsx`) and the navbar hero/premise cards
-(`CharacterCard.*`, `PremiseCard.*` on the `.navMat` swatch in
-`App.module.css`). Header, footer and modals stay on the incumbent Mantine
-system. The shared mechanics live in ONE place — `paper.module.css` (tokens,
+(`CharacterCard.*`, `PremiseCard.*` in the navbar). **The world is now the
+whole page**: the craft ground is the page background (`App.css`), the shell
+— header, footer, navbar — is paper (`App.module.css`), and every modal is a
+torn sheet on a dimmed craft ground (`paperChrome.module.css`). No Mantine
+chrome surface is left; Mantine still supplies behaviour, not appearance.
+The shared mechanics live in ONE place — `paper.module.css` (tokens,
 `.mat` scene + focus ring, `.paper` torn-sheet primitive, `.grain`,
 say-sticker grammar, error chip) plus `PaperFilters.tsx` (the `#msk-tear*`
 filters, mounted once in `App`); view modules only set colourway/tilt
@@ -171,10 +174,10 @@ variables on top.
 
 ## Typography and headings
 
-- Default Mantine type scale in the app shell (header/footer/modals); every
-  mat surface (entry and story views) uses the paper world's display/body
-  faces (see "The paper-craft world"). Footer wordmark uses `ff="heading"`
-  italic.
+- The paper world's display/body faces carry the whole app now — shell,
+  views and modals alike (see "The paper-craft world"). Titan One has no
+  italic, so the footer wordmark is the display face upright; do not
+  faux-italicise a display face.
 - Button labels use `tt="none"`, not `capitalize`: action titles are
   sentence-style instructions, and Title Casing produced "Follow The Red
   Smudge" (`ActionButton.tsx`).

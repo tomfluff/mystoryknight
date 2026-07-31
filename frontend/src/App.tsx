@@ -1,15 +1,5 @@
 import "./App.css";
-import {
-  AppShell,
-  Box,
-  Burger,
-  Button,
-  Flex,
-  Group,
-  ScrollArea,
-  Text,
-  rem,
-} from "@mantine/core";
+import { AppShell, Burger, Button, Flex, Group, ScrollArea } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
@@ -53,17 +43,16 @@ function App() {
 
   /* Rendered twice (header from `sm` up, navbar below) because
      visibleFrom/hiddenFrom are CSS-only; defined once so the two spots
-     cannot drift. */
+     cannot drift. The sticker grammar they wear lives in App.module.css. */
   const controls = (
     <>
       <Button
         disabled={!isSession}
         onClick={reset}
-        color="orange.6"
-        autoContrast
+        className={classes.resetBtn}
         h={44}
       >
-        Reset
+        {t("reset")}
       </Button>
       <AboutModal />
       <PreferenceModal />
@@ -74,7 +63,7 @@ function App() {
   return (
     <>
       {/* Torn-edge filters for every paper surface (entry mat, story mat,
-          navbar cards) — mounted exactly once. */}
+          navbar cards, the footer scrap) — mounted exactly once. */}
       <PaperFilters />
       <AppShell
       header={{ height: 60 }}
@@ -89,10 +78,13 @@ function App() {
            burger must be able to open it. Mobile key is unchanged. */
         collapsed: { mobile: !opened, desktop: !isCharacter && !opened },
       }}
-      padding="sm"
+      /* The craft ground runs edge to edge: no gutter around the world, and
+         no Mantine hairlines framing it. */
+      padding={0}
+      withBorder={false}
     >
-      <AppShell.Header px="md" py={8}>
-        <Flex justify="space-between" align="center" direction="row" h="100%">
+      <AppShell.Header px="md" py={8} className={classes.header}>
+        <Flex justify="space-between" align="center" direction="row" h="100%" gap="sm">
           <Burger
             opened={opened}
             onClick={toggleNavbar}
@@ -101,19 +93,33 @@ function App() {
             /* 44px touch target (DESIGN.md, Interaction); glyph stays size="sm". */
             w={44}
             h={44}
+            className={classes.burger}
             aria-label={opened ? t("closeMenu") : t("openMenu")}
           />
-          <Text size="md">MyStoryKnight.</Text>
+          {/* The one wordmark in the app: the entry masthead's lockup moves
+              here, so the brand is not stated twice in two design languages. */}
+          <div className={classes.lockup}>
+            <span className={classes.logoArt} aria-hidden="true">
+              <img
+                src={`${import.meta.env.BASE_URL}logo.png`}
+                alt=""
+                loading="eager"
+              />
+            </span>
+            <p className={classes.wordmark}>MyStoryKnight.</p>
+          </div>
           {/* Below `sm` these controls move to the navbar; the fixed 60px
               header cannot fit them next to the burger on small screens. */}
-          <Group gap="sm" visibleFrom="sm">
+          <Group gap="sm" visibleFrom="sm" className={classes.controls}>
             {controls}
           </Group>
         </Flex>
       </AppShell.Header>
-      <AppShell.Navbar p="md">
+      <AppShell.Navbar p="md" className={classes.navbar}>
         <AppShell.Section hiddenFrom="sm">
-          <Group gap="sm">{controls}</Group>
+          <Group gap="sm" className={classes.controls}>
+            {controls}
+          </Group>
         </AppShell.Section>
         <AppShell.Section
           grow
@@ -122,7 +128,8 @@ function App() {
           type="scroll"
           scrollHideDelay={500}
         >
-          {/* Paper cards need the mat ground to read — see App.module.css. */}
+          {/* The rail is the ground; the cards borrow the mat's scene without
+              its floating-card silhouette — see App.module.css. */}
           {(isCharacter || isPremise) && (
             <div className={classes.navMat}>
               <div className={paperClasses.grain} aria-hidden="true" />
@@ -134,35 +141,27 @@ function App() {
           )}
         </AppShell.Section>
       </AppShell.Navbar>
-      <AppShell.Main w={rem("99vw")}>
+      <AppShell.Main className={classes.main}>
         {(!isSession || !isCharacter || !isPremise) && <InstructionView />}
         {isSession && isCharacter && isPremise && <StoryView />}
       </AppShell.Main>
       {/* py=8 leaves 44px of usable height inside the fixed 60px footer, so
           the author link can meet the 44px touch target. */}
-      <AppShell.Footer px="sm" py={8}>
-        <Flex w="100%" h="100%" justify="center" align="center" gap="sm">
-          <Box>
-            <Text component="span" fw={500} fs="italic" ff="heading">
-              MyStoryKnight.
-            </Text>{" "}
-            is a project by{" "}
-            <Button
-              component={Link}
+      <AppShell.Footer px="sm" py={8} className={classes.footer}>
+        <Flex w="100%" h="100%" justify="center" align="center">
+          {/* A torn scrap lying on the ground, not a dark bar. */}
+          <p className={classes.credit}>
+            <span className={classes.creditMark}>MyStoryKnight.</span> is a
+            project by{" "}
+            <Link
+              className={classes.creditLink}
               to="https://github.com/tomfluff"
               replace={false}
-              radius="lg"
-              size="compact-sm"
-              h={44}
-              variant="gradient"
-              gradient={{ from: "violet", to: "grape", deg: 90 }}
-              c="white"
-              px="sm"
-              leftSection={<FaStar />}
             >
+              <FaStar aria-hidden="true" />
               tomfluff
-            </Button>
-          </Box>
+            </Link>
+          </p>
         </Flex>
       </AppShell.Footer>
       </AppShell>

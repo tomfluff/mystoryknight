@@ -19,7 +19,7 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: var(--sp-2);
 }
 
 .wrapper {
@@ -140,14 +140,18 @@
    - used:     keeps its paper colour (the story's history keeps its colour)
      and swaps the arrow for a green check sticker -- shape marks "the one
      you picked"
-   - inactive + unused: natively disabled, dimmed, flattened shadow, no lift */
+   - inactive + unused: natively disabled, dimmed, flattened shadow, no lift
+
+   Tilt budget (paper.module.css): a flap is a sheet of paper in the layout,
+   not something taped on, so it sits square. What keeps neighbouring flaps
+   from twinning is the alternate colourway and its own tear seeds. */
 .flap {
   composes: paper from "./paper.module.css";
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--sp-2);
   min-height: 44px; /* 44px touch target (DESIGN.md, Interaction) */
-  padding: 0.6rem 0.95rem;
+  padding: var(--sp-2) var(--sp-4);
   background: none;
   border: none;
   cursor: pointer;
@@ -166,8 +170,6 @@
   --shy: 6px;
   --shb: 13px;
   --sha: 0.36;
-  --tilt: -0.9deg;
-  transform: rotate(var(--tilt));
   transition: transform 0.18s var(--ease-out);
 }
 /* Alternate colourway so neighbouring flaps differ -- assigned by list
@@ -177,11 +179,10 @@
   --sheet: var(--sky);
   --tf1: url(#msk-tearD);
   --tf2: url(#msk-tearE);
-  --tilt: 0.9deg;
 }
 .flap:hover:not(:disabled),
 .flap:focus-visible {
-  transform: rotate(0deg) translateY(-3px);
+  transform: translateY(-3px);
   z-index: 3;
 }
 .flap:active:not(:disabled) {
@@ -191,7 +192,6 @@
   cursor: default;
   opacity: 0.55;
   --sha: 0.18;
-  transform: rotate(var(--tilt));
 }
 .flapLabel {
   min-width: 0;
@@ -221,7 +221,6 @@
   background: #2f8f3c;
   border: 2.5px solid #fff;
   box-shadow: 0 2px 5px rgba(14, 7, 28, 0.3);
-  transform: rotate(6deg);
 }
 .flapCheck svg {
   width: 15px;
@@ -241,7 +240,6 @@
   color: var(--ink);
   border: 3px solid #fff;
   cursor: pointer;
-  transform: rotate(3deg);
   box-shadow: 0 3px 8px rgba(14, 7, 28, 0.35);
   transition: transform 0.18s var(--ease-out);
 }
@@ -250,7 +248,7 @@
   height: 20px;
 }
 .moreBtn:hover {
-  transform: rotate(0deg) translateY(-2px);
+  transform: translateY(-2px);
 }
 .moreBtn:active {
   transform: translateY(1px);
