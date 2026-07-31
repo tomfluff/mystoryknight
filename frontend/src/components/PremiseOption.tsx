@@ -22,8 +22,8 @@ const PremiseOption = ({ premise, selected, onSelect }: Props) => {
 
   if (titleLoading || descLoading) {
     return (
-      <Paper withBorder p="md" radius="md">
-        <Loader size="sm" type="dots" />
+      <Paper withBorder p="sm" radius="md">
+        <Loader size="xs" type="dots" />
       </Paper>
     );
   }
@@ -31,7 +31,7 @@ const PremiseOption = ({ premise, selected, onSelect }: Props) => {
   return (
     <Paper
       withBorder
-      p="md"
+      p="sm"
       radius="md"
       component="label"
       className={classes.option}
@@ -41,12 +41,15 @@ const PremiseOption = ({ premise, selected, onSelect }: Props) => {
         <Radio
           checked={selected}
           onChange={onSelect}
+          size="sm"
           aria-label={title}
-          mt={4}
+          mt={2}
         />
-        <Stack gap={6} flex={1} miw={0}>
-          <Text fw={600}>{title}</Text>
-          <Text size="sm" c="dimmed">
+        <Stack gap={4} flex={1} miw={0}>
+          <Text size="sm" fw={600}>
+            {title}
+          </Text>
+          <Text size="xs" c="dimmed">
             {desc}
           </Text>
           {/* Stop the click bubbling to the label: pressing play should read

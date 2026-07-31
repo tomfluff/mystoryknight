@@ -66,9 +66,9 @@ const HeroGallery = ({ disabled }: { disabled?: boolean }) => {
   const busy = pickHero.isPending || disabled;
 
   return (
-    <Box mt="md">
-      <Divider label={t("galleryTitle")} labelPosition="center" mb="xs" />
-      <Text size="sm" c="dimmed" mb="sm">
+    <Box mt="sm">
+      <Divider label={t("galleryTitle")} labelPosition="center" mb={6} />
+      <Text size="xs" c="dimmed" mb="xs">
         {t("galleryTip")}
       </Text>
       <SimpleGrid

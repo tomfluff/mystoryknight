@@ -13,7 +13,7 @@ const PreferenceModal = () => {
     <>
       <ActionIcon
         variant="default"
-        size="xl"
+        size="lg"
         aria-label={t("openPreferences")}
         onClick={toggleOpened}
       >

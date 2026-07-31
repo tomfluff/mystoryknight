@@ -104,10 +104,18 @@ names its scheme pair once, in CSS, never inline in JSX:
 
 ## Interaction
 
-- **Touch targets: 44x44px minimum.** The primary user is a child on a phone;
-  WCAG 2.5.8's 24px floor understates the need — hold to 2.5.5 (44px)
-  instead. Reset already sets `h={44}`; header icons use `ActionIcon
-  size="xl"`. New interactive elements must not ship below 44px.
+- **Touch targets: sized by role, never below WCAG 2.5.8's 24px floor.**
+  This replaces an earlier blanket 44px rule, which made the whole interface
+  read as oversized once the chrome shrank. The scale now follows importance:
+  - **Chrome** (header controls, Reset, the burger) sits at conventional web
+    sizes — `ActionIcon size="lg"` (34px), `Button size="xs"`. Comfortably
+    past 24px, and it is adult-facing configuration, not play.
+  - **Setup and secondary actions** use `size="sm"` (36px).
+  - **The story's own choice buttons stay large.** Those are the controls a
+    child actually taps, repeatedly, on a phone, and they are the product.
+    Do not shrink them to match the chrome.
+  - Inline text links inside a sentence (the footer credit) are exempt from
+    the target-size rule and stay inline.
 - **Reduced motion: reduce the motion, not the information.**
   `ActionButton.module.css:110-119` is the reference implementation: under
   `prefers-reduced-motion: reduce` the sparkle animation stops but the stars
@@ -149,7 +157,7 @@ names its scheme pair once, in CSS, never inline in JSX:
   `AboutModal`, `PreferenceModal`). No exceptions.
 - Focus: rely on Mantine's default `focus-auto` visible focus rings; do not
   suppress outlines.
-- Colour never the sole signal; 44px touch targets; reduced-motion fallback —
+- Colour never the sole signal; role-sized touch targets; reduced-motion —
   see the sections above.
 
 ## i18n

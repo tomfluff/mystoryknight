@@ -57,7 +57,7 @@ function App() {
         onClick={reset}
         color="orange.6"
         autoContrast
-        h={44}
+        size="xs"
       >
         Reset
       </Button>
@@ -69,9 +69,12 @@ function App() {
 
   return (
     <AppShell
-      /* 45 = a 44px touch target with 1px to spare, so the controls keep
-         their full hit area in a shorter band. 30 is the credit strip. */
-      header={{ height: 45 }}
+      /* Chrome sized to its controls: 40 fits the 34px header controls with
+         breathing room, 30 is the credit strip. Controls sit at conventional
+         web sizes rather than the old 44px minimum -- comfortably past the
+         24px WCAG 2.5.8 floor, and the story's own choice buttons (the
+         controls a child actually uses) stay large. */
+      header={{ height: 40 }}
       footer={{ height: 30 }}
       navbar={{
         width: 320,
@@ -85,7 +88,6 @@ function App() {
       }}
       padding="sm"
     >
-      {/* py=0: the 44px controls need the whole 45px band. */}
       <AppShell.Header px="md" py={0}>
         <Flex justify="space-between" align="center" direction="row" h="100%">
           <Burger
@@ -93,9 +95,8 @@ function App() {
             onClick={toggleNavbar}
             hiddenFrom="sm"
             size="sm"
-            /* 44px touch target (DESIGN.md, Interaction); glyph stays size="sm". */
-            w={44}
-            h={44}
+            w={34}
+            h={34}
             aria-label={opened ? t("closeMenu") : t("openMenu")}
           />
           <Group gap={8} wrap="nowrap">
@@ -136,7 +137,7 @@ function App() {
       </AppShell.Navbar>
       {/* pb clears the fixed footer: without it the footer sits over the end
           of a long entry card (the hero gallery ran 148px underneath it). */}
-      <AppShell.Main w={rem("99vw")} pb={rem(46)}>
+      <AppShell.Main w={rem("99vw")} pb={rem(40)}>
         {(!isSession || !isCharacter || !isPremise) && <InstructionView />}
         {isSession && isCharacter && isPremise && <StoryView />}
       </AppShell.Main>

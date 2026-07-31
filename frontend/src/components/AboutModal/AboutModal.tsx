@@ -20,7 +20,7 @@ const AboutModal = () => {
     <>
       <ActionIcon
         variant="default"
-        size="xl"
+        size="lg"
         aria-label={t("openAbout")}
         onClick={toggleOpened}
       >

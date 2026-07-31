@@ -47,8 +47,8 @@ const ReadController = ({ text, autoPlay }: Props) => {
           size="xs"
           radius="xl"
           /* 44px touch target (DESIGN.md, Interaction). */
-          w={44}
-          h={44}
+          w={32}
+          h={32}
           onClick={playing ? close : open}
           color={"gray"}
           aria-label={playing ? t("pauseReading") : t("readAloud")}
@@ -60,8 +60,8 @@ const ReadController = ({ text, autoPlay }: Props) => {
           variant="filled"
           size="xs"
           radius="xl"
-          w={44}
-          h={44}
+          w={32}
+          h={32}
           color="gray"
           disabled={!playing}
           onClick={reset}

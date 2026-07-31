@@ -3,24 +3,22 @@ import {
   Paper,
   Stack,
   Title,
-  Divider,
   rem,
   Text,
   Button,
   Box,
   Group,
   ThemeIcon,
-  Loader,
 } from "@mantine/core";
 import { FaCheck } from "react-icons/fa";
 import { useAdventureStore } from "../stores/adventureStore";
 import { initSession, useSessionStore } from "../stores/sessionStore";
 import getAxiosInstance from "../utils/axiosInstance";
-import { useIsFetching, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useDisclosure } from "@mantine/hooks";
 import DrawingUploadModal from "./DrawingUploadModal";
-import PremiseSelectModal from "./PremiseSelectModal";
 import HeroGallery from "./HeroGallery";
+import PremisePicker from "./PremisePicker";
 import { useUiStrings } from "../i18n/strings";
 
 type TStepState = "current" | "locked" | "done";
@@ -47,19 +45,29 @@ const Step = ({
   <Group align="flex-start" gap="sm" wrap="nowrap">
     <ThemeIcon
       radius="xl"
-      size={32}
+      size={26}
       variant={state === "current" ? "filled" : "light"}
       color={state === "done" ? "green" : state === "current" ? undefined : "gray"}
       aria-hidden="true"
     >
-      {state === "done" ? <FaCheck size={14} /> : <Text fw={700}>{n}</Text>}
+      {state === "done" ? (
+        <FaCheck size={11} />
+      ) : (
+        <Text size="xs" fw={700}>
+          {n}
+        </Text>
+      )}
     </ThemeIcon>
     <Box flex={1} miw={0} opacity={state === "locked" ? 0.55 : 1}>
       {state === "done" ? (
-        <Text c="dimmed">{done}</Text>
+        <Text size="sm" c="dimmed">
+          {done}
+        </Text>
       ) : (
         <>
-          <Text mb="xs">{title}</Text>
+          <Text size="sm" mb={8}>
+            {title}
+          </Text>
           {children}
         </>
       )}
@@ -76,13 +84,6 @@ const InstructionView = () => {
 
   const [captureModal, { open: openCapture, close: closeCapture }] =
     useDisclosure();
-  const [premiseModal, { open: openPremise, close: closePremise }] =
-    useDisclosure();
-
-  /* Premise generation starts the moment a character exists -- the modal is
-     mounted but closed, so the whole wait happens out here and used to look
-     like nothing was happening. Read it from the query cache. */
-  const premisesPending = useIsFetching({ queryKey: ["premise"] }) > 0;
 
   const newSession = useMutation({
     mutationKey: ["session"],
@@ -107,17 +108,12 @@ const InstructionView = () => {
       <Center>
         {/* Fixed measure rather than "as wide as the longest sentence": the
             card used to size itself to its copy, so it stretched to ~650px
-            and left the hero gallery adrift in an empty right half. 34rem
-            keeps the step text at a readable line length and the gallery
-            filling its width. */}
-        <Paper withBorder p="xl" radius="lg" mt={rem(20)} w="100%" maw={rem(544)}>
-          <Stack align="center" mb={rem(20)}>
-            <Title order={1} size="h3" fs="italic">
-              Your Adventure Awaits
-            </Title>
-            <Divider size="sm" w={rem(128)} />
-          </Stack>
-          <Stack align="stretch" gap="lg">
+            and left the hero gallery adrift in an empty right half. */}
+        <Paper withBorder p="lg" radius="md" mt={rem(16)} w="100%" maw={rem(544)}>
+          <Title order={1} size="h4" ta="center" mb="lg">
+            Your Adventure Awaits
+          </Title>
+          <Stack align="stretch" gap="md">
             <Step
               n={1}
               state={step1}
@@ -125,20 +121,19 @@ const InstructionView = () => {
               title="Start a new session to set up the system. You can change the settings afterwards."
             >
               <Button
-                size="md"
-                h={44}
+                size="sm"
                 onClick={() => newSession.mutate()}
                 loading={newSession.isPending}
               >
                 Start New Session
               </Button>
               {newSession.isPending && (
-                <Text size="sm" c="dimmed" mt="xs">
+                <Text size="xs" c="dimmed" mt={6}>
                   Waking up the server. The first start can take up to a minute.
                 </Text>
               )}
               {newSession.isError && (
-                <Text size="sm" c="red" mt="xs">
+                <Text size="xs" c="red" mt={6}>
                   Could not reach the server. Check your connection and press the
                   button again.
                 </Text>
@@ -151,12 +146,7 @@ const InstructionView = () => {
               done={t("stepDoneHero")}
               title="Upload a drawing of a character to be the hero of your story."
             >
-              <Button
-                size="md"
-                h={44}
-                onClick={openCapture}
-                disabled={session == null}
-              >
+              <Button size="sm" onClick={openCapture} disabled={session == null}>
                 Capture your Drawing
               </Button>
               {/* Second route to the same character pipeline, for children
@@ -170,35 +160,14 @@ const InstructionView = () => {
               done={t("stepDonePremise")}
               title="Select a premise to set the stage for your story."
             >
-              <Button
-                size="md"
-                h={44}
-                onClick={openPremise}
-                disabled={character == null}
-                /* Not `loading`: that swaps the label out for the spinner and
-                   leaves an unlabelled button. Keep the label, add the loader
-                   beside it. */
-                leftSection={
-                  premisesPending ? <Loader size="xs" color="white" /> : undefined
-                }
-              >
-                Select a Premise
-              </Button>
-              {premisesPending && (
-                <Text size="sm" c="dimmed" mt="xs" role="status">
-                  {t("premiseNoteWaiting")}
-                </Text>
-              )}
+              {/* Inline, not a modal: the last setup step now works like the
+                  first two, and its generation wait is visible in place. */}
+              {character && <PremisePicker character={character} />}
             </Step>
           </Stack>
         </Paper>
       </Center>
       <DrawingUploadModal display={captureModal} finalAction={closeCapture} />
-      <PremiseSelectModal
-        character={character}
-        display={premiseModal}
-        finalAction={closePremise}
-      />
     </>
   );
 };
