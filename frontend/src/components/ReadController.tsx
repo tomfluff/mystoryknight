@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Group, Button } from "@mantine/core";
+import { ActionIcon, Group } from "@mantine/core";
 import { useDisclosure, useOs } from "@mantine/hooks";
 import getAxiosInstance from "../utils/axiosInstance";
 import { FaPause, FaPlay } from "react-icons/fa";
@@ -41,34 +41,31 @@ const ReadController = ({ text, autoPlay }: Props) => {
 
   return (
     <Group justify="space-between" align="center">
+      {/* ActionIcon, not Button: a Button carries horizontal padding, so
+          forcing one to 32px square squeezed the icon out entirely. */}
       <Group gap="xs">
-        <Button
+        <ActionIcon
           variant="filled"
-          size="xs"
+          size="lg"
           radius="xl"
-          /* 44px touch target (DESIGN.md, Interaction). */
-          w={32}
-          h={32}
           onClick={playing ? close : open}
-          color={"gray"}
+          color="gray"
           aria-label={playing ? t("pauseReading") : t("readAloud")}
         >
-          {playing ? <FaPause /> : <FaPlay />}
-        </Button>
+          {playing ? <FaPause size={14} /> : <FaPlay size={14} />}
+        </ActionIcon>
 
-        <Button
-          variant="filled"
-          size="xs"
+        <ActionIcon
+          variant="subtle"
+          size="lg"
           radius="xl"
-          w={32}
-          h={32}
           color="gray"
           disabled={!playing}
           onClick={reset}
           aria-label={t("restartReading")}
         >
-          <FaRotateLeft />
-        </Button>
+          <FaRotateLeft size={14} />
+        </ActionIcon>
       </Group>
       <audio
         ref={audioRef}
