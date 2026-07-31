@@ -7,11 +7,18 @@ import "./index.css";
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
 import "@mantine/core/styles.css";
-import { createTheme, MantineProvider } from "@mantine/core";
+import { createTheme, DirectionProvider, MantineProvider } from "@mantine/core";
+import { useLanguageDirection } from "./hooks/useLanguageDirection.ts";
 
 const theme = createTheme({
   primaryColor: "violet",
 });
+
+// Syncs <html dir>/<html lang> with the language preference (RTL for Hebrew).
+function LanguageDirectionSync() {
+  useLanguageDirection();
+  return null;
+}
 
 // Import `createBrowserRouter` and `RouterProvider` from `react-router-dom`
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -36,12 +43,15 @@ const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <MantineProvider theme={theme} defaultColorScheme="dark">
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-        {/* Dev only -- this was shipping to production users. */}
-        {import.meta.env.DEV && <ReactQueryDevtools />}
-      </QueryClientProvider>
-    </MantineProvider>
+    <DirectionProvider>
+      <LanguageDirectionSync />
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+          {/* Dev only -- this was shipping to production users. */}
+          {import.meta.env.DEV && <ReactQueryDevtools />}
+        </QueryClientProvider>
+      </MantineProvider>
+    </DirectionProvider>
   </React.StrictMode>
 );

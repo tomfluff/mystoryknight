@@ -5,6 +5,18 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   base: "/mystoryknight/",
+  build: {
+    rollupOptions: {
+      output: {
+        // Split the big vendor libraries out of the app chunk so the initial
+        // bundle stays under Vite's 500 kB warning and vendors cache separately.
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          mantine: ["@mantine/core", "@mantine/hooks"],
+        },
+      },
+    },
+  },
   server: {
     port: 3000, // Default port
     strictPort: true, // Don't allow a different port than the one specified

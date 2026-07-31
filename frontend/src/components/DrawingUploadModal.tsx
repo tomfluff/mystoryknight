@@ -10,12 +10,16 @@ import {
   Loader,
   Select,
 } from "@mantine/core";
-import Webcam from "react-webcam";
+import { lazy, Suspense } from "react";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { useMutation } from "@tanstack/react-query";
 import getAxiosInstance from "../utils/axiosInstance";
 import { setCharacter } from "../stores/adventureStore";
 import { createCallContext } from "../utils/llmIntegration";
+
+// Lazy: react-webcam only loads when the capture modal actually renders the
+// camera, keeping it out of the initial bundle.
+const Webcam = lazy(() => import("react-webcam"));
 
 type Props = {
   display: boolean;
@@ -103,12 +107,14 @@ const DrawingUploadModal = ({ display, finalAction }: Props) => {
           )}
           {!click && cameraError && <Text c="red">{cameraError}</Text>}
           {!click && !cameraError && (
-            <Webcam
-              ref={webcamRef}
-              videoConstraints={videoConstraints}
-              onUserMedia={refreshDevices}
-              onUserMediaError={handleUserMediaError}
-            />
+            <Suspense fallback={<Loader />}>
+              <Webcam
+                ref={webcamRef}
+                videoConstraints={videoConstraints}
+                onUserMedia={refreshDevices}
+                onUserMediaError={handleUserMediaError}
+              />
+            </Suspense>
           )}
           {click && base64Capture && (
             <Image src={base64Capture} alt="placeholder" />

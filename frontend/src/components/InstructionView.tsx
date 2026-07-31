@@ -43,7 +43,7 @@ const InstructionView = () => {
       <Center>
         <Paper withBorder p="xl" radius="lg" mt={rem(20)}>
           <Stack align="center" mb={rem(20)}>
-            <Title order={3} fs="italic">
+            <Title order={1} size="h3" fs="italic">
               Your Adventure Awaits
             </Title>
             <Divider size="sm" w={rem(128)} />

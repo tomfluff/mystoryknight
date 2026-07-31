@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { memo, useEffect } from "react";
 import {
   Image,
   Badge,
@@ -225,6 +225,13 @@ const StoryPart = ({ part, isNew }: Props) => {
   const [captureModal, { open: openCapture, close: closeCapture }] =
     useDisclosure();
 
+  // The bot avatar changes with the part's sentiment, so it is content for
+  // screen readers, not decoration.
+  const sentiment = part.sentiment ?? "neutral";
+  const botAlt = `Storyteller looking ${
+    sentiment === "shocking" ? "shocked" : sentiment
+  }`;
+
   return (
     <>
       <Stack gap="sm">
@@ -236,6 +243,8 @@ const StoryPart = ({ part, isNew }: Props) => {
                   ? `avatar/bot/bot${part.sentiment}.png`
                   : "avatar/bot/botneutral.png"
               }
+              alt={botAlt}
+              imageProps={{ loading: "lazy" }}
               radius="sm"
             />
           </Group>
@@ -297,7 +306,12 @@ const StoryPart = ({ part, isNew }: Props) => {
           align="flex-end"
           gap="sm"
         >
-          <Avatar src={`avatar/user/${user_avatar}`} radius="sm" />
+          <Avatar
+            src={`avatar/user/${user_avatar}`}
+            alt=""
+            imageProps={{ loading: "lazy" }}
+            radius="sm"
+          />
           {finished && isNew && (
             <Paper
               radius="md"
@@ -372,4 +386,7 @@ const StoryPart = ({ part, isNew }: Props) => {
   );
 };
 
-export default StoryPart;
+// Every part stays mounted for the whole story; memo keeps old parts from
+// re-rendering when a new one is appended. Props are memo-friendly: `part`
+// keeps its reference unless updatePart rebuilds it, `isNew` is a boolean.
+export default memo(StoryPart);

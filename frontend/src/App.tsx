@@ -57,7 +57,7 @@ function App() {
       }}
       padding="sm"
     >
-      <AppShell.Header p="md">
+      <AppShell.Header px="md" py={8}>
         <Flex justify="space-between" align="center" direction="row" h="100%">
           <Burger
             opened={opened}
@@ -66,8 +66,16 @@ function App() {
             size="sm"
           />
           <Text size="md">MyStoryKnight.</Text>
-          <Group gap="sm">
-            <Button disabled={!isSession} onClick={reset} color="orange">
+          {/* Below `sm` these controls move to the navbar; the fixed 60px
+              header cannot fit them next to the burger on small screens. */}
+          <Group gap="sm" visibleFrom="sm">
+            <Button
+              disabled={!isSession}
+              onClick={reset}
+              color="orange.6"
+              autoContrast
+              h={44}
+            >
               Reset
             </Button>
             <AboutModal />
@@ -77,6 +85,22 @@ function App() {
         </Flex>
       </AppShell.Header>
       <AppShell.Navbar p="md">
+        <AppShell.Section hiddenFrom="sm">
+          <Group gap="sm">
+            <Button
+              disabled={!isSession}
+              onClick={reset}
+              color="orange.6"
+              autoContrast
+              h={44}
+            >
+              Reset
+            </Button>
+            <AboutModal />
+            <PreferenceModal />
+            <ColorSchemeToggle />
+          </Group>
+        </AppShell.Section>
         <AppShell.Section
           grow
           mt="xs"

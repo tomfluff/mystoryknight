@@ -9,7 +9,7 @@
  *
  */
 import { useCallback, useMemo, useRef, useState } from "react";
-import Webcam from "react-webcam";
+import type Webcam from "react-webcam";
 
 // `preferBack`: on phones, default to the rear camera (photographing a drawing)
 // rather than the selfie camera. Desktop labels never match, so it is a no-op there.
