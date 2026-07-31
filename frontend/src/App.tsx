@@ -75,7 +75,12 @@ function App() {
       navbar={{
         width: 320,
         breakpoint: "xs",
-        collapsed: { mobile: !opened },
+        /* The rail only ever holds the character and premise cards, so on
+           desktop it stays collapsed until a character exists — otherwise an
+           empty 320px column sits beside the entry card. `!opened` keeps the
+           xs–sm band working: there the burger is visible but the navbar
+           still counts as "desktop", so the burger must be able to open it. */
+        collapsed: { mobile: !opened, desktop: !isCharacter && !opened },
       }}
       padding="sm"
     >
@@ -127,7 +132,9 @@ function App() {
           </Flex>
         </AppShell.Section>
       </AppShell.Navbar>
-      <AppShell.Main w={rem("99vw")}>
+      {/* pb clears the fixed 60px footer: without it the footer sits over the
+          end of a long entry card (the hero gallery ran 148px underneath it). */}
+      <AppShell.Main w={rem("99vw")} pb={rem(76)}>
         {(!isSession || !isCharacter || !isPremise) && <InstructionView />}
         {isSession && isCharacter && isPremise && <StoryView />}
       </AppShell.Main>

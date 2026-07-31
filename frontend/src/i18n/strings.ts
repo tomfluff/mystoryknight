@@ -123,6 +123,24 @@ const strings = {
     ja: "このせんたくしについてもっと",
     es: "Más sobre esta opción",
   },
+  stepDoneSession: {
+    en: "Session started",
+    he: "המפגש התחיל",
+    ja: "セッションをはじめました",
+    es: "Sesión iniciada",
+  },
+  stepDoneHero: {
+    en: "Your hero is ready",
+    he: "הגיבור שלכם מוכן",
+    ja: "ヒーローのじゅんびができました",
+    es: "Tu héroe está listo",
+  },
+  stepDonePremise: {
+    en: "Beginning chosen",
+    he: "ההתחלה נבחרה",
+    ja: "はじまりをえらびました",
+    es: "Comienzo elegido",
+  },
   galleryTitle: {
     en: "No drawing today? Pick a hero!",
     he: "אין ציור היום? בחרו גיבור!",
