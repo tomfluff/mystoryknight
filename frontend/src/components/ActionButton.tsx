@@ -37,7 +37,7 @@ const ActionButton = ({ action, handleClick, emphasis }: Props) => {
       )}
       <Button
         size="sm"
-        /* 44px touch target (DESIGN.md, Interaction) -- this is the primary
+        /* 44px touch target (docs/DESIGN.md, Interaction) -- this is the primary
            child-facing control. */
         h={44}
         /* Logical corners: the flattened edge joins the popover button and

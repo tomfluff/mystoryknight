@@ -1,6 +1,6 @@
 /*
  * Selectable premise card. Selection is carried by the radio, the border and
- * the tint together -- never by colour alone (DESIGN.md, "Colour is never the
+ * the tint together -- never by colour alone (docs/DESIGN.md, "Colour is never the
  * sole signal").
  */
 .option {

@@ -16,7 +16,7 @@
     var(--mantine-color-dark-6)
   );
   transition: border-color 100ms ease, background-color 100ms ease, transform 100ms ease;
-  /* 44px minimum touch target (DESIGN.md, Interaction): the primary user is a
+  /* 44px minimum touch target (docs/DESIGN.md, Interaction): the primary user is a
      child on a phone. The image keeps the tile well above this. */
   min-height: 44px;
 }

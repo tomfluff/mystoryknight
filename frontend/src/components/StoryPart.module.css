@@ -1,5 +1,5 @@
 /*
- * Story bubble surface. The scheme pair lives here as a token (DESIGN.md,
+ * Story bubble surface. The scheme pair lives here as a token (docs/DESIGN.md,
  * "Dark mode"): violet.4 in light, violet.8 in dark, white text in both --
  * components must not re-decide this with inline colorScheme branches.
  */

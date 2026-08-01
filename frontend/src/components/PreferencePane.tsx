@@ -69,7 +69,7 @@ const PreferencePane = () => {
           }}
         />
         <Divider />
-        {/* size="sm": settings are a secondary-tier surface (DESIGN.md,
+        {/* size="sm": settings are a secondary-tier surface (docs/DESIGN.md,
             Interaction), same scale as the entry flow's Buttons -- xl/32px
             here read as oversized against the rest of the app. */}
         <Switch
