@@ -37,34 +37,36 @@ class LLMRefusal(LLMError):
 
 
 def _extract_gemini_image_b64(body):
-    """Base64 image bytes from a Gemini /interactions response.
+    """Base64 image bytes from a generateContent response.
 
-    Tries the documented `interaction.output_image.data` path plus a couple
-    of plausible siblings, then falls back to a generic scan for the first
-    dict anywhere in the body that carries a base64-shaped `data` field next
-    to a `mime_type` -- response envelopes for a still-new endpoint drift
-    between docs and reality more often than established ones. Raising with
-    a body snippet beats a bare KeyError when that happens.
+    Real shape, verified against a live call: candidates[0].content.parts is
+    a mixed list (a text part, an image part, sometimes a huge
+    `thoughtSignature` reasoning blob alongside the image part) -- find the
+    part carrying `inlineData` and return its `data`. A part can be plain
+    text with no `inlineData` key at all, so check for the key rather than
+    indexing a fixed position.
+
+    Falls back to a generic scan (any dict with an `inlineData`/`data` pair,
+    or the older camelCase-agnostic `mime_type`+`data` shape) in case a
+    future response varies its envelope; raises with a body snippet rather
+    than a bare KeyError when nothing matches.
     """
-    for path in (
-        ("interaction", "output_image", "data"),
-        ("output_image", "data"),
-        ("interaction", "output", "image", "data"),
-    ):
-        node = body
-        for key in path:
-            if not isinstance(node, dict) or key not in node:
-                node = None
-                break
-            node = node[key]
-        if isinstance(node, str) and node:
-            return node
+    try:
+        for part in body["candidates"][0]["content"]["parts"]:
+            inline = part.get("inlineData")
+            if isinstance(inline, dict) and isinstance(inline.get("data"), str):
+                return inline["data"]
+    except (KeyError, IndexError, TypeError):
+        pass
 
     def _scan(node):
         if isinstance(node, dict):
-            if isinstance(node.get("data"), str) and node.get("mime_type", "").startswith(
-                "image/"
-            ):
+            inline = node.get("inlineData")
+            if isinstance(inline, dict) and isinstance(inline.get("data"), str):
+                return inline["data"]
+            if isinstance(node.get("data"), str) and str(
+                node.get("mime_type") or node.get("mimeType") or ""
+            ).startswith("image/"):
                 return node["data"]
             for v in node.values():
                 found = _scan(v)
@@ -1129,11 +1131,24 @@ Example JSON object:
         return self._send_image_request_openai(request, references)
 
     def _send_image_request_gemini(self, request, references=None):
+        # NB: the real contract, verified 2026-08-01 against a live key --
+        # the doc-summary shape this was first written against
+        # (POST /v1beta/interactions, {"input": [...]}, response at
+        # interaction.output_image.data) does not exist and 403s as an
+        # unregistered caller. The real endpoint is the standard
+        # generateContent REST call every other Gemini model uses:
+        #   POST /v1beta/models/{model}:generateContent
+        #   body: {"contents": [{"parts": [...]}], "generationConfig": {...}}
+        #   image parts in: {"inline_data": {"mime_type", "data"}}
+        #   image parts out: candidates[0].content.parts[*].inlineData
+        #     ({"mimeType", "data"} -- camelCase only on the way out).
+        # aspectRatio confirmed by decoding the returned bytes (1:1 -> a
+        # literal 1024x1024 JPEG).
         try:
-            # `input` is text first, then reference images in order -- that
+            # `parts` is text first, then reference images in order -- that
             # order is what the prompt's "Image 1" / "Image 2" labels refer
             # to, same contract the openai path has via `image[]`.
-            input_items = [{"type": "text", "text": request}]
+            parts = [{"text": request}]
             for ref_b64 in references or []:
                 # The inline pipeline hands us WebP; the data: header carries
                 # the real type. Without one the bytes came from url mode,
@@ -1143,23 +1158,20 @@ Example JSON object:
                     data_header, ref_b64 = ref_b64.split(",", 1)
                     if data_header.startswith("data:") and "/" in data_header:
                         media_type = data_header[len("data:") :].split(";", 1)[0]
-                input_items.append(
-                    {"type": "image", "mime_type": media_type, "data": ref_b64}
+                parts.append(
+                    {"inline_data": {"mime_type": media_type, "data": ref_b64}}
                 )
 
             response = requests.post(
-                "https://generativelanguage.googleapis.com/v1beta/interactions",
+                f"https://generativelanguage.googleapis.com/v1beta/models/{self.image_gen}:generateContent",
                 headers={
                     "x-goog-api-key": self.gemini_key,
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": self.image_gen,
-                    "input": input_items,
-                    "response_format": {
-                        "type": "image",
-                        "aspect_ratio": IMAGE_GEN_ASPECT_RATIO_GEMINI,
-                        "image_size": IMAGE_GEN_SIZE_GEMINI,
+                    "contents": [{"parts": parts}],
+                    "generationConfig": {
+                        "imageConfig": {"aspectRatio": IMAGE_GEN_ASPECT_RATIO_GEMINI}
                     },
                 },
                 timeout=(5, 180),

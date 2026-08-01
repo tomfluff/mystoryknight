@@ -11,7 +11,10 @@ MODEL_STT = "whisper-1"
 # Both stay implemented and configured so either can be switched to at any
 # time without code changes.
 #   "openai" -- gpt-image-2 via OpenAI's images.generate / images.edit.
-#   "gemini" -- gemini-3.1-flash-lite-image via Google's /v1beta/interactions.
+#   "gemini" -- gemini-3.1-flash-lite-image via Google's generateContent REST
+#     call (the same endpoint shape every Gemini model uses -- verified live;
+#     an earlier version of this pointed at a fictional /v1beta/interactions
+#     endpoint that 403s).
 IMAGE_GEN_PROVIDER = "gemini"
 
 # -- openai provider --
@@ -36,15 +39,15 @@ IMAGE_GEN_RESOLUTION_OPENAI = "1024x1024"
 IMAGE_GEN_QUALITY_OPENAI = "low"
 
 # -- gemini provider --
-# Auth'd with GEMINI_API_KEY (see .env.example). Per Google's own prompt
-# guide, this tier is NOT optimized for multiple reference inputs -- we still
-# send two (the child's drawing + the previous illustration) for character
-# consistency, same as the openai path; watch illustration quality and drop
-# to a single reference if it degrades.
+# Auth'd with GEMINI_API_KEY (see .env.example). Docs for this tier warn it
+# is NOT optimized for multiple reference inputs -- we still send two (the
+# child's drawing + the previous illustration) for character consistency,
+# same as the openai path; watch illustration quality and drop to a single
+# reference if it degrades.
 MODEL_IMAGE_GEN_GEMINI = "gemini-3.1-flash-lite-image"
-# Documented sizes: 512px (0.5K) or 1K. 1K is the closest match to the
-# openai path's 1024x1024 request.
-IMAGE_GEN_SIZE_GEMINI = "1K"
+# Sent as generationConfig.imageConfig.aspectRatio. There is no separate
+# pixel-size field -- the model picks its own native resolution per aspect
+# ratio (1:1 measured as a real 1024x1024 JPEG).
 IMAGE_GEN_ASPECT_RATIO_GEMINI = "1:1"
 
 # Downscale before serving -- 1024px-class output is far larger than the
