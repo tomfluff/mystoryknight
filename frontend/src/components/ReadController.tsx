@@ -42,29 +42,31 @@ const ReadController = ({ text, autoPlay }: Props) => {
   return (
     <Group justify="space-between" align="center">
       {/* ActionIcon, not Button: a Button carries horizontal padding, so
-          forcing one to 32px square squeezed the icon out entirely. */}
+          forcing one to a fixed square squeezed the icon out entirely.
+          26px = size="lg" (34px) reduced 25%; still clears the 24px
+          WCAG 2.5.8 target-size floor for this secondary-tier control. */}
       <Group gap="xs">
         <ActionIcon
           variant="filled"
-          size="lg"
+          size={26}
           radius="xl"
           onClick={playing ? close : open}
           color="gray"
           aria-label={playing ? t("pauseReading") : t("readAloud")}
         >
-          {playing ? <FaPause size={14} /> : <FaPlay size={14} />}
+          {playing ? <FaPause size={11} /> : <FaPlay size={11} />}
         </ActionIcon>
 
         <ActionIcon
           variant="subtle"
-          size="lg"
+          size={26}
           radius="xl"
           color="gray"
           disabled={!playing}
           onClick={reset}
           aria-label={t("restartReading")}
         >
-          <FaRotateLeft size={14} />
+          <FaRotateLeft size={11} />
         </ActionIcon>
       </Group>
       <audio

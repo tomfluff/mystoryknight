@@ -1,12 +1,14 @@
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   Box,
+  Button,
   Divider,
   Image,
-  Loader,
   SimpleGrid,
   Text,
   UnstyledButton,
+  VisuallyHidden,
 } from "@mantine/core";
 import getAxiosInstance from "../utils/axiosInstance";
 import { setCharacter } from "../stores/adventureStore";
@@ -48,6 +50,9 @@ const toJpegDataUrl = async (src: string): Promise<string> => {
 const HeroGallery = ({ disabled }: { disabled?: boolean }) => {
   const instance = getAxiosInstance();
   const t = useUiStrings();
+  // Picking a tile only marks it; nothing is sent until "Select this hero"
+  // is pressed, so a child can look at a few before committing to one.
+  const [selected, setSelected] = useState<number | null>(null);
 
   const pickHero = useMutation({
     mutationKey: ["hero-pick"],
@@ -80,8 +85,9 @@ const HeroGallery = ({ disabled }: { disabled?: boolean }) => {
           <UnstyledButton
             key={hero.nameKey}
             className={classes.tile}
-            onClick={() => pickHero.mutate(i)}
+            onClick={() => setSelected(i)}
             disabled={busy}
+            data-selected={selected === i}
             data-picking={pickHero.isPending && pickHero.variables === i}
           >
             <Image
@@ -96,11 +102,20 @@ const HeroGallery = ({ disabled }: { disabled?: boolean }) => {
           </UnstyledButton>
         ))}
       </SimpleGrid>
+      <Button
+        size="sm"
+        mt="xs"
+        fullWidth
+        disabled={selected === null || busy}
+        loading={pickHero.isPending}
+        onClick={() => selected !== null && pickHero.mutate(selected)}
+      >
+        {t("selectHero")}
+      </Button>
+      {/* The button's own spinner is the one visible indicator; this only
+          gives screen readers the same status a sighted child sees. */}
       {pickHero.isPending && (
-        <Text size="sm" c="dimmed" mt="xs" role="status">
-          <Loader size="xs" type="dots" mr={6} />
-          {t("heroPending")}
-        </Text>
+        <VisuallyHidden role="status">{t("heroPending")}</VisuallyHidden>
       )}
       {pickHero.isError && (
         <Text size="sm" c="red" mt="xs" role="alert">

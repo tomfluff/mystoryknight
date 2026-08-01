@@ -59,7 +59,7 @@ const PreferencePane = () => {
         <Select
           label={t("storyLanguage")}
           description={t("storyLanguageDesc")}
-          size="md"
+          size="sm"
           radius="md"
           data={storyLanguageOptions}
           value={language}
@@ -69,11 +69,11 @@ const PreferencePane = () => {
           }}
         />
         <Divider />
-        {/* size="xl" on switches and the enlarged slider thumb keep these
-            controls at the 44px touch-target floor (DESIGN.md): the operator
-            is often a child on a phone. */}
+        {/* size="sm": settings are a secondary-tier surface (DESIGN.md,
+            Interaction), same scale as the entry flow's Buttons -- xl/32px
+            here read as oversized against the rest of the app. */}
         <Switch
-          size="xl"
+          size="sm"
           checked={autoReadStorySections}
           onChange={(e) => {
             setPreferences({ autoReadStorySections: e.currentTarget.checked });
@@ -85,7 +85,7 @@ const PreferencePane = () => {
         />
 
         <Switch
-          size="xl"
+          size="sm"
           checked={includeStoryImages}
           onChange={(e) => {
             setPreferences({ includeStoryImages: e.currentTarget.checked });
@@ -99,8 +99,7 @@ const PreferencePane = () => {
         <Box>
           <Text size="sm">{t("storyComplexity")}</Text>
           <Slider
-            size="lg"
-            thumbSize={32}
+            size="sm"
             marks={storyComplexityOptions}
             label={null}
             value={storyComplexity}

@@ -4,29 +4,51 @@
 MODEL_VISION = "gpt-5.6-terra"
 MODEL_GPT4 = "gpt-5.6-terra"
 MODEL_GPT3 = "gpt-5.6-luna"
-# In use: gpt-image-2. Takes no input_fidelity param, and measured ~23-32s at
-# low quality on edits -- 70s at medium, so do NOT use medium.
+MODEL_TTS = "gpt-4o-mini-tts"
+MODEL_STT = "whisper-1"
+
+# Image generation: two interchangeable providers, picked by IMAGE_GEN_PROVIDER.
+# Both stay implemented and configured so either can be switched to at any
+# time without code changes.
+#   "openai" -- gpt-image-2 via OpenAI's images.generate / images.edit.
+#   "gemini" -- gemini-3.1-flash-lite-image via Google's /v1beta/interactions.
+IMAGE_GEN_PROVIDER = "gemini"
+
+# -- openai provider --
+# Takes no input_fidelity param, and measured ~23-32s at low quality on edits
+# -- 70s at medium, so do NOT use medium.
 # Alternatives, all measured on edits with a reference image:
 #   gpt-image-1-mini: fastest/cheapest, ~12-13s at low, ~$0.006/image. Rejects
 #     input_fidelity too -- keep it empty or the API 400s.
 #   gpt-image-1.5 + fidelity=high: ~15-19s, ~$0.05 low / ~$0.08 medium
-MODEL_IMAGE_GEN = "gpt-image-2"
+MODEL_IMAGE_GEN_OPENAI = "gpt-image-2"
 # Only sent when non-empty, and only on the edits (reference image) path.
 # Values: high | low (gpt-image-1 / 1.5 only).
 # "low" on purpose: high preserves the WHOLE input image (composition,
 # background, layout) and made every illustration look like the input. We only
 # want the character kept; scene freedom comes from the prompt.
 IMAGE_GEN_INPUT_FIDELITY = ""  # image-2 rejects the param entirely
-MODEL_TTS = "gpt-4o-mini-tts"
-MODEL_STT = "whisper-1"
 # gpt-image-* supports 1024x1024, 1024x1536, 1536x1024 or "auto" -- not 256x256.
 # It always returns base64, never a URL. Quality: low | medium | high | auto.
-IMAGE_GEN_RESOLUTION = "1024x1024"
+IMAGE_GEN_RESOLUTION_OPENAI = "1024x1024"
 # "low" measured ~20-25% faster and half the cost of "medium" (output tokens
 # 1400 -> 460); bump back to "medium" if low looks too rough in the story panel.
-IMAGE_GEN_QUALITY = "low"
-# Downscale before serving -- 1024px is the smallest the model emits, but the
-# story panel never displays it that large.
+IMAGE_GEN_QUALITY_OPENAI = "low"
+
+# -- gemini provider --
+# Auth'd with GEMINI_API_KEY (see .env.example). Per Google's own prompt
+# guide, this tier is NOT optimized for multiple reference inputs -- we still
+# send two (the child's drawing + the previous illustration) for character
+# consistency, same as the openai path; watch illustration quality and drop
+# to a single reference if it degrades.
+MODEL_IMAGE_GEN_GEMINI = "gemini-3.1-flash-lite-image"
+# Documented sizes: 512px (0.5K) or 1K. 1K is the closest match to the
+# openai path's 1024x1024 request.
+IMAGE_GEN_SIZE_GEMINI = "1K"
+IMAGE_GEN_ASPECT_RATIO_GEMINI = "1:1"
+
+# Downscale before serving -- 1024px-class output is far larger than the
+# story panel ever displays. Applies to either provider.
 IMAGE_STORE_MAX_SIZE = 512
 
 # How illustrations reach the client:

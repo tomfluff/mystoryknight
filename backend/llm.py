@@ -36,6 +36,56 @@ class LLMRefusal(LLMError):
     pass
 
 
+def _extract_gemini_image_b64(body):
+    """Base64 image bytes from a Gemini /interactions response.
+
+    Tries the documented `interaction.output_image.data` path plus a couple
+    of plausible siblings, then falls back to a generic scan for the first
+    dict anywhere in the body that carries a base64-shaped `data` field next
+    to a `mime_type` -- response envelopes for a still-new endpoint drift
+    between docs and reality more often than established ones. Raising with
+    a body snippet beats a bare KeyError when that happens.
+    """
+    for path in (
+        ("interaction", "output_image", "data"),
+        ("output_image", "data"),
+        ("interaction", "output", "image", "data"),
+    ):
+        node = body
+        for key in path:
+            if not isinstance(node, dict) or key not in node:
+                node = None
+                break
+            node = node[key]
+        if isinstance(node, str) and node:
+            return node
+
+    def _scan(node):
+        if isinstance(node, dict):
+            if isinstance(node.get("data"), str) and node.get("mime_type", "").startswith(
+                "image/"
+            ):
+                return node["data"]
+            for v in node.values():
+                found = _scan(v)
+                if found:
+                    return found
+        elif isinstance(node, list):
+            for v in node:
+                found = _scan(v)
+                if found:
+                    return found
+        return None
+
+    found = _scan(body)
+    if found:
+        return found
+
+    raise LLMError(
+        f"could not find image data in Gemini response: {json.dumps(body)[:500]}"
+    )
+
+
 def _unwrap_choice(choice):
     """Parsed JSON body of a chat choice, or raise. Never returns None."""
     if getattr(choice.message, "refusal", None):
@@ -318,15 +368,33 @@ class Storyteller:
         self.gpt4 = MODEL_GPT4
         self.gpt3 = MODEL_GPT3
         self.vision = MODEL_VISION
-        self.image_gen = MODEL_IMAGE_GEN
         self.stt = MODEL_STT
         self.tts = MODEL_TTS
+
+        # Image generation: provider picked by config, both stay wired up so
+        # either can be switched to without touching code.
+        self.image_gen_provider = IMAGE_GEN_PROVIDER
+        self.image_gen = (
+            MODEL_IMAGE_GEN_GEMINI
+            if self.image_gen_provider == "gemini"
+            else MODEL_IMAGE_GEN_OPENAI
+        )
+        self.gemini_key = os.environ.get("GEMINI_API_KEY", "")
+        if (
+            self.image_gen_provider == "gemini"
+            and not self.gemini_key
+            and logger
+        ):
+            logger.error(
+                "GEMINI_API_KEY is not set -- image generation will fail."
+            )
 
         if logger:
             logger.info(f"LLM storyteller initialized.")
         if logger:
             logger.debug(
-                f"Modes: {self.gpt4}, {self.gpt3}, {self.vision}, {self.image_gen}, {self.stt}, {self.tts}"
+                f"Modes: {self.gpt4}, {self.gpt3}, {self.vision}, "
+                f"{self.image_gen_provider}:{self.image_gen}, {self.stt}, {self.tts}"
             )
 
     # -- Storyteller Functions --
@@ -1049,6 +1117,69 @@ Example JSON object:
             raise e
 
     def send_image_request(self, request, references=None):
+        """Generate an image, dispatching to whichever provider config picks.
+
+        Both providers stay fully implemented (see IMAGE_GEN_PROVIDER in
+        config.py) so switching is a one-line config change, never a code
+        change. Both return the same contract: plain base64 image bytes, no
+        data: header.
+        """
+        if self.image_gen_provider == "gemini":
+            return self._send_image_request_gemini(request, references)
+        return self._send_image_request_openai(request, references)
+
+    def _send_image_request_gemini(self, request, references=None):
+        try:
+            # `input` is text first, then reference images in order -- that
+            # order is what the prompt's "Image 1" / "Image 2" labels refer
+            # to, same contract the openai path has via `image[]`.
+            input_items = [{"type": "text", "text": request}]
+            for ref_b64 in references or []:
+                # The inline pipeline hands us WebP; the data: header carries
+                # the real type. Without one the bytes came from url mode,
+                # which stores PNG.
+                media_type = "image/png"
+                if "," in ref_b64[:64]:  # strip a data: URL header if present
+                    data_header, ref_b64 = ref_b64.split(",", 1)
+                    if data_header.startswith("data:") and "/" in data_header:
+                        media_type = data_header[len("data:") :].split(";", 1)[0]
+                input_items.append(
+                    {"type": "image", "mime_type": media_type, "data": ref_b64}
+                )
+
+            response = requests.post(
+                "https://generativelanguage.googleapis.com/v1beta/interactions",
+                headers={
+                    "x-goog-api-key": self.gemini_key,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": self.image_gen,
+                    "input": input_items,
+                    "response_format": {
+                        "type": "image",
+                        "aspect_ratio": IMAGE_GEN_ASPECT_RATIO_GEMINI,
+                        "image_size": IMAGE_GEN_SIZE_GEMINI,
+                    },
+                },
+                timeout=(5, 180),
+            )
+            if response.status_code != 200:
+                raise LLMError(
+                    f"image generation failed ({response.status_code}): {response.text[:500]}"
+                )
+            if logger:
+                logger.debug(
+                    f"Successfuly sent 'image' request (gemini) with model={self.image_gen}, "
+                    f"{len(references or [])} reference(s)"
+                )
+            return _extract_gemini_image_b64(response.json())
+        except Exception as e:
+            if logger:
+                logger.error(e)
+            raise e
+
+    def _send_image_request_openai(self, request, references=None):
         try:
             if references:
                 # images.edit with the child's drawing as the reference anchors
@@ -1089,8 +1220,8 @@ Example JSON object:
                     data={
                         "model": self.image_gen,
                         "prompt": request,
-                        "size": IMAGE_GEN_RESOLUTION,
-                        "quality": IMAGE_GEN_QUALITY,
+                        "size": IMAGE_GEN_RESOLUTION_OPENAI,
+                        "quality": IMAGE_GEN_QUALITY_OPENAI,
                         "n": 1,
                         # Identity preservation for the reference character.
                         # Only send when configured -- mini rejects the param.
@@ -1108,20 +1239,20 @@ Example JSON object:
                     )
                 if logger:
                     logger.debug(
-                        f"Successfuly sent 'image edit' request with model={self.image_gen}"
+                        f"Successfuly sent 'image edit' request (openai) with model={self.image_gen}"
                     )
                 return response.json()["data"][0]["b64_json"]
 
             response = self.llm.images.generate(
                 model=self.image_gen,
                 prompt=request,
-                size=IMAGE_GEN_RESOLUTION,
-                quality=IMAGE_GEN_QUALITY,
+                size=IMAGE_GEN_RESOLUTION_OPENAI,
+                quality=IMAGE_GEN_QUALITY_OPENAI,
                 n=1,
             )
             if logger:
                 logger.debug(
-                    f"Successfuly sent 'image' LLM request with model={self.image_gen}"
+                    f"Successfuly sent 'image' request (openai) with model={self.image_gen}"
                 )
 
             # gpt-image-* always returns base64, never a URL.

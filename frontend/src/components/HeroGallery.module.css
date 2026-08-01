@@ -6,7 +6,7 @@
 .tile {
   display: block;
   padding: var(--mantine-spacing-xs);
-  border: 1px solid light-dark(
+  border: 2px solid light-dark(
     var(--mantine-color-gray-3),
     var(--mantine-color-dark-4)
   );
@@ -15,7 +15,7 @@
     var(--mantine-color-white),
     var(--mantine-color-dark-6)
   );
-  transition: border-color 100ms ease, transform 100ms ease;
+  transition: border-color 100ms ease, background-color 100ms ease, transform 100ms ease;
   /* 44px minimum touch target (DESIGN.md, Interaction): the primary user is a
      child on a phone. The image keeps the tile well above this. */
   min-height: 44px;
@@ -32,11 +32,19 @@
   cursor: default;
 }
 
-/* The tile being sent keeps full opacity so the child can see which one they
-   picked while the rest dim -- state by position, not by colour alone. */
+/* Marked, not yet committed: picking a tile only highlights it -- "Select
+   this hero" is what actually starts the character pipeline, so a child can
+   look at a few before deciding. Border + tint, never colour alone. */
+.tile[data-selected="true"] {
+  border-color: var(--mantine-primary-color-filled);
+  background: var(--mantine-primary-color-light);
+}
+
+/* The tile actually being sent keeps full opacity so the child can see which
+   one is in flight while the rest dim -- state by position, not by colour
+   alone. */
 .tile[data-picking="true"] {
   opacity: 1;
-  border-color: var(--mantine-primary-color-filled);
 }
 
 /* The gallery fills the card's content width now that the card has a fixed

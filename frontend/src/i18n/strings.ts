@@ -195,6 +195,12 @@ const strings = {
     ja: "スーパーいぬのワッフル",
     es: "Gofre el superperro",
   },
+  selectHero: {
+    en: "Select this hero",
+    he: "בחרו בגיבור הזה",
+    ja: "このヒーローにする！",
+    es: "Elegir a este héroe",
+  },
   heroPending: {
     en: "Inviting your hero into the story…",
     he: "הגיבור נכנס אל הסיפור…",
